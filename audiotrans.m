@@ -12,7 +12,7 @@ close all; clear all; clc;
 %   - 'bypass' : no audio transmission, takes txsignal as received signal
 
 % Configuration Values
-conf.audiosystem = 'bypass'; % Values: 'matlab','native','bypass'
+conf.audiosystem = 'native'; % Values: 'matlab','native','bypass'
 
 conf.f_s     = 48000;   % sampling rate  
 conf.f_sym   = 100;     % symbol rate
@@ -25,6 +25,9 @@ conf.npreamble  = 100;
 conf.bitsps     = 16;   % bits per audio sample
 conf.offset     = 0;
 conf.rolloff    = 0.22;
+
+conf.SNR_db = 100; % change the value of the SNR to artificially add some noise
+conf.SNR_lin = 10^(conf.SNR_db/10);
 
 conf.qpsk = [1+1j -1+1j -1-1j 1-1j]/sqrt(2);
 
@@ -119,9 +122,9 @@ for k=1:conf.nframes
     end
     
     % Plot received signal for debugging
-    figure;
-    plot(rxsignal);
-    title('Received Signal')
+    % figure;
+    % plot(rxsignal);
+    % title('Received Signal')
     
     %
     % End
@@ -129,6 +132,8 @@ for k=1:conf.nframes
     % % % % % % % % % % % %
     
     % TODO: Implement rx() Receive Function
+    figure
+    plot(rxsignal)
     [rxbits conf]       = rx(rxsignal,conf);
     
     res.rxnbits(k)      = length(rxbits);  

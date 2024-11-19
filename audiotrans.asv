@@ -26,6 +26,9 @@ conf.bitsps     = 16;   % bits per audio sample
 conf.offset     = 0;
 conf.rolloff    = 0.22;
 
+conf.SNR_db = 5; % change the value of the SNr to 
+conf.SNR_lin = 10^(conf.SNR_db/10);
+
 conf.qpsk = [1+1j -1+1j -1-1j 1-1j]/sqrt(2);
 
 conf.tx_filter_len = 20;
