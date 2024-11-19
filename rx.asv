@@ -25,12 +25,24 @@ r_bb = lowpass(r_dc,conf);
 
 pulse = rrc(conf.os_factor, conf.rolloff, conf.tx_filter_len*conf.os_factor);
 
-filtered_rx_signal
-%plot(rxsignal);
-preamble = preamble_generate(100);
-preamble_bpsk = -2.*preamble+1;
-preamble_bpsk(1:10)
+filtered_rx_signal = conv(r_bb, pulse, 'same');
+figure
+plot(filtered_rx_signal, '.');
+
+start = frame_sync(filtered_rx_signal, conf.os_factor);
+
+rx_signal = filtered_rx_signal(start:conf.os_factor:start + conf.os_factor*conf.nbits/2-1);
+
+
+
+plot(rxsignal);
+
+[~, idx] = min()
+
+rxbits 
+% preamble = preamble_generate(100);
+% preamble_bpsk = -2.*preamble+1;
 
 
 % dummy 
-rxbits = zeros(conf.nbits,1);
+% rxbits = zeros(conf.nbits,1);
