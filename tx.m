@@ -19,6 +19,9 @@ tx_symbols = [preamble_bpsk.', conf.qpsk(bi2de(reshape(txbits, size(txbits, 1)/2
 % figure
 % plot(tx_symbols, '.');
 
+% noise = 1/sqrt(2*conf.SNR_lin)*randn(size(tx_symbols));
+% tx_symbols = tx_symbols + noise + 1j*noise ;
+
 symbol_up = upsample(tx_symbols, conf.os_factor);
 % figure
 % plot(symbol_up, '.');
@@ -30,13 +33,20 @@ pulse = rrc(conf.os_factor, conf.rolloff, conf.tx_filter_len*conf.os_factor);
 % plot(pulse);
 
 
-tx_signal_BB = conv(symbol_up, pulse, 'same');
+tx_signal_BB = conv(symbol_up, pulse, 'full');
 % figure
 % plot(tx_signal_BB, '.');
 
 
 time = 0:1/conf.f_s:(length(tx_signal_BB)/conf.f_s)-1/conf.f_s;
 txsignal = real(tx_signal_BB.*exp(1j*2*pi*conf.f_c.*time)).';
+
+% % Calculate the RMS value
+% rms_value = rms(txsignal);
+% 
+% % Normalize the signal
+% txsignal = txsignal / rms_value;
+
 % plot(txsignal);
 
 % dummy 400Hz sinus generation
