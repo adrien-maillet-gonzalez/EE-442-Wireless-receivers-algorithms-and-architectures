@@ -20,7 +20,7 @@ time = 0:1/conf.f_s:(length(rxsignal))/conf.f_s - 1/conf.f_s;
 r_dc = rxsignal .* exp(-1j*2*pi*conf.f_c*time');
 
 % Low pass filter around DC to keep only the valuable info
-r_bb = lowpass(r_dc,conf);
+r_bb = 2*lowpass(r_dc,conf);
 
 % Demodulation of the RX signal
 pulse = rrc(conf.os_factor, conf.rolloff, conf.tx_filter_len*conf.os_factor);
