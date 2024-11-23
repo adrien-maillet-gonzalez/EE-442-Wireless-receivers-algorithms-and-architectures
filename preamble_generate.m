@@ -2,8 +2,8 @@ function [preamble] = preamble_generate(length)
 % preamble_generate() 
 % input : length: a scaler value, desired length of preamble.
 % output: preamble: preamble bits
+
 preamble = ones(length, 1);
-% TODO:
 
 LFSR = ones(11, 1);
 
