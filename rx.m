@@ -24,14 +24,24 @@ r_bb = 2*lowpass(r_dc,conf);
 
 % Demodulation of the RX signal
 pulse = rrc(conf.os_factor, conf.rolloff, conf.tx_filter_len*conf.os_factor);
+figure();
+title("Pulse");
+plot(pulse);
 filtered_rx_signal = conv(r_bb, pulse, 'full');
 
 % Use the preamble to get the index where the data starts
-start = frame_sync(filtered_rx_signal, conf.os_factor);
+[start, theta] = frame_sync(filtered_rx_signal, conf.os_factor)
+
+figure();
+title("CONV no phase correction");
+plot(filtered_rx_signal(start:conf.os_factor:start + conf.os_factor*conf.nbits/2-1), 'r.');
 
 % Down-Sample the data and keep only the one from the start idex
-rx_signal = filtered_rx_signal(start:conf.os_factor:start + conf.os_factor*conf.nbits/2-1);
+rx_signal = filtered_rx_signal(start:conf.os_factor:start + conf.os_factor*conf.nbits/2-1).*exp(-1j * theta);
 
+figure();
+title("CONV with phase correction");
+plot(rx_signal, 'b.');
 % Demapping of the symbols to data bits
 [~, idx] = min(abs(rx_signal - conf.qpsk).^2, [], 2);
 rxbits = reshape(de2bi(idx-1, 2, 'left-msb'), [], 1);

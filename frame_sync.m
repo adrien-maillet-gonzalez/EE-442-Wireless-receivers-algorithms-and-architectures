@@ -1,5 +1,5 @@
 
-function beginning_of_data = frame_sync(rx_signal, L)
+function [beginning_of_data, phase_of_peak] = frame_sync(rx_signal, L)
 
 % Frame synchronizer.
 % rx_signal is the noisy received signal, and L is the oversampling factor (L=1 in chapter 2, L=4 in all later chapters).
@@ -24,11 +24,18 @@ frame_sync_sequence = 1 - 2*preamble_generate(frame_sync_length);
 current_peak_value = 0;
 samples_after_threshold = L;
 
+
+
+T_list = [];
+
 corVal = [];
 for i = L * frame_sync_length + 1 : length(rx_signal)
     r = rx_signal(i - L * frame_sync_length : L : i - L); % The part of the received signal that is currently inside the correlator.
     c = frame_sync_sequence' * r;
     T = abs(c)^2 / abs(r' * r);
+
+    T_list = [T_list, T];
+   
     
     corVal = [corVal T]; 
     
@@ -37,6 +44,7 @@ for i = L * frame_sync_length + 1 : length(rx_signal)
         if (T > current_peak_value)
             beginning_of_data = i;
             current_peak_value = T;
+            phase_of_peak = mod(angle(c), 2*pi);
         end
         if (samples_after_threshold == 0)
             %display(['Frame starts at ',num2str(beginning_of_data),'th symbol'])
@@ -44,12 +52,18 @@ for i = L * frame_sync_length + 1 : length(rx_signal)
             %xlabel('Offset [symbols]')
             %ylabel('Normalized autocorrelation')
             %grid on
+            figure();
+            plot(T_list)
+            title("T list");
             return;
         end
     end
     
 end
 
+figure();
+plot(T_list)
+title("T list");
 error('No synchronization sequence found.');
 end
 

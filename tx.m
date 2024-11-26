@@ -28,15 +28,14 @@ pulse = rrc(conf.os_factor, conf.rolloff, conf.tx_filter_len*conf.os_factor);
 tx_signal_BB = conv(symbol_up, pulse, 'full');
 
 % (for bypass mode, add some noise to check if we introduce some errors)
-noise = 1/sqrt(2*conf.SNR_lin)*randn(size(tx_signal_BB));
-tx_signal_BB = tx_signal_BB + noise + 1j*noise ;
+if conf.audiosystem == 'bypass'
+    output_text = "Add some noise to the signal"
+    noise = 1/sqrt(2*conf.SNR_lin)*randn(size(tx_signal_BB));
+    tx_signal_BB = tx_signal_BB + noise + 1j*noise ;
+end
+
+
 
 % Up-Sampling of the TX signal
 time = 0:1/conf.f_s:(length(tx_signal_BB)/conf.f_s)-1/conf.f_s;
 txsignal = real(tx_signal_BB.*exp(1j*2*pi*conf.f_c.*time)).';
-
-% Calculate the RMS value
-rms_value = rms(txsignal);
-
-% Normalize the signal
-txsignal = txsignal / rms_value;

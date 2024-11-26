@@ -14,7 +14,7 @@ close all; clear all; clc;
 
 
 % Configuration Values
-conf.audiosystem = 'bypass'; % Values: 'matlab','native','bypass'
+conf.audiosystem = 'matlab'; % Values: 'matlab','native','bypass'
 
 conf.f_s     = 48000;   % sampling rate  
 conf.f_sym   = 100;     % symbol rate
@@ -28,7 +28,7 @@ conf.bitsps     = 16;   % bits per audio sample
 conf.offset     = 0;
 conf.rolloff    = 0.22;
 
-conf.SNR_db = 5; % change the value of the SNR to artificially add some noise
+conf.SNR_db = 500; % change the value of the SNR to artificially add some noise
 conf.SNR_lin = 10^(conf.SNR_db/10);
 
 conf.qpsk = [-1-1j -1+1j 1+1j 1-1j]/sqrt(2);
@@ -53,7 +53,7 @@ res.rxnbits     = zeros(conf.nframes,1);
 
 % Results
 
-freq_range = 100:100:2000;
+freq_range = 100:200:2000;
 BER_list = zeros(size(freq_range));
 for ii = 1:numel(freq_range)
     conf.f_sym = freq_range(ii);
@@ -65,6 +65,10 @@ for ii = 1:numel(freq_range)
         
         % TODO: Implement tx() Transmit Function
         [txsignal conf] = tx(txbits,conf,k);
+
+        figure();
+        title("TX Signal");
+        plot(txsignal);
         
         % % % % % % % % % % % %
         % Begin
@@ -140,6 +144,9 @@ for ii = 1:numel(freq_range)
         
         % TODO: Implement rx() Receive Function
 
+        figure();
+        plot(rxsignal);
+        title("RX signal");
         [rxbits conf]       = rx(rxsignal,conf);
         
         res.rxnbits(k)      = length(rxbits);  
@@ -151,7 +158,7 @@ for ii = 1:numel(freq_range)
     per = sum(res.biterrors > 0)/conf.nframes;
     ber = sum(res.biterrors)/sum(res.rxnbits);
 
-    BER_list(ii) = ber;
+    BER_list(ii) = ber
 end
 
 figure;
