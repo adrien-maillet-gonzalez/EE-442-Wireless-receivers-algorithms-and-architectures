@@ -15,37 +15,34 @@ function [rxbits conf] = rx(rxsignal,conf,k)
 %
 
 time = 0:1/conf.f_s:(length(rxsignal))/conf.f_s - 1/conf.f_s;
-figure
-plot(rxsignal)
 
+% Signal UP-conversion
 r_dc = rxsignal .* exp(-1j*2*pi*conf.f_c*time');
-figure
-plot(r_dc);
 
-r_bb = lowpass(r_dc,conf);
+% Low pass filter around DC to keep only the valuable info
+r_bb = 2*lowpass(r_dc,conf);
 
-
+% Demodulation of the RX signal
 pulse = rrc(conf.os_factor, conf.rolloff, conf.tx_filter_len*conf.os_factor);
-
+figure();
+title("Pulse");
+plot(pulse);
 filtered_rx_signal = conv(r_bb, pulse, 'full');
-figure
-plot(filtered_rx_signal, '.');
 
-start = frame_sync(filtered_rx_signal, conf.os_factor)
+% Use the preamble to get the index where the data starts
+[start, theta] = frame_sync(filtered_rx_signal, conf.os_factor)
 
-rx_signal = filtered_rx_signal(start:conf.os_factor:start + conf.os_factor*conf.nbits/2-1);
+figure();
+title("CONV no phase correction");
+plot(filtered_rx_signal(start:conf.os_factor:start + conf.os_factor*conf.nbits/2-1), 'r.');
 
+% Down-Sample the data and keep only the one from the start idex
+rx_signal = filtered_rx_signal(start:conf.os_factor:start + conf.os_factor*conf.nbits/2-1).*exp(-1j * theta);
 
-
-plot(rxsignal);
-
+figure();
+title("CONV with phase correction");
+plot(rx_signal, 'b.');
+% Demapping of the symbols to data bits
 [~, idx] = min(abs(rx_signal - conf.qpsk).^2, [], 2);
-
 rxbits = reshape(de2bi(idx-1, 2, 'left-msb'), [], 1);
 
-% preamble = preamble_generate(100);
-% preamble_bpsk = -2.*preamble+1;
-
-
-% dummy 
-% rxbits = zeros(conf.nbits,1);
