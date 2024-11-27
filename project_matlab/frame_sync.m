@@ -10,11 +10,11 @@ if (rx_signal(1) == 0),
     
 end
 
-detection_threshold = 15;
+detection_threshold = 20;
 frame_sync_length = 100;
 
 % Calculate the frame synchronization sequence and map it to BPSK: 0 -> +1, 1 -> -1
-frame_sync_sequence = 1 - 2*preamble_generate(frame_sync_length);
+frame_sync_sequence = preamble_generate(frame_sync_length);
 
 % When processing an oversampled signal (L>1), the following is important:
 % Do not simply return the index where T exceeds the threshold for the first time. Since the signal is oversampled, so will be the

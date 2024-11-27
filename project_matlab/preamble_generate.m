@@ -21,6 +21,7 @@ for i = 2:length
     preamble(i) = LFSR(8);
 end
 
+preamble = 1 - 2*preamble;
 end
 
 

@@ -13,29 +13,75 @@ function [txsignal conf] = tx(txbits,conf,k)
 %   k       : Frame index
 %
 
-% Generate the preamble in BPSK
-preamble = preamble_generate(100);
-preamble_bpsk = -2.*preamble+1;
+    %% Preamble (do we need to normalize the preamble before normalizing the overall signal)
+    % Generate the preamble in BPSK
+    preamble_bpsk = preamble_generate(100);
 
-% Combine the preamble in BPSK and the data in QPSK
-tx_symbols = [preamble_bpsk.', conf.qpsk(bi2de(reshape(txbits, size(txbits, 1)/2, 2), 'left-msb')+1)];
+    % Up-sample the preamble
+    preamble_up = upsample(preamble_bpsk, conf.os_factor_preamble);
 
-% Up-Sampling of the signal
-symbol_up = upsample(tx_symbols, conf.os_factor);
+    % Pulse shape the preamble
+    preamble_shaped = matched_filter(preamble_up, conf);
 
-% Modulation of the RX Signal
-pulse = rrc(conf.os_factor, conf.rolloff, conf.tx_filter_len*conf.os_factor);
-tx_signal_BB = conv(symbol_up, pulse, 'full');
+    %% Training sequence
+    training_sequence_bpsk = preamble_gen(conf.N);
 
-% (for bypass mode, add some noise to check if we introduce some errors)
-if conf.audiosystem == 'bypass'
-    output_text = "Add some noise to the signal"
-    noise = 1/sqrt(2*conf.SNR_lin)*randn(size(tx_signal_BB));
-    tx_signal_BB = tx_signal_BB + noise + 1j*noise ;
+    %% Bitstream
+    tx_qpsk = conf.qpsk(bi2de(reshape(txbits, size(txbits, 1)/2, 2), 'left-msb')+1).';
+
+    %% Concatenate the training sequence and the bitstream
+    tx_training_and_bitstream = [training_sequence_bpsk; tx_qpsk];
+
+    % Serial to parallel conversion
+    tx_parallel_symbols = reshape(tx_training_and_bitstream, conf.N, []);
+
+    %% OS-Inv-FFT (OSIFFT)
+
+    % Concatenate the series signals
+    tx_OSIFFT_parallel = zeros(conf.os_factor_data * conf.N, size(tx_parallel_symbols, 2)); % do we really need to add the +1 here?
+
+    for symbol_index = 1:size(tx_parallel_symbols, 2)
+
+        tx_OSIFFT_parallel(:, symbol_index) = osifft(tx_parallel_symbols(:, symbol_index), conf.os_factor_data);
+
+    end
+
+    %% Add the Cyclic Prefix
+
+    for symbol_index = 1:size(tx_parallel_symbols, 2)
+
+        CP_len = conf.cyclic_prefix_len * conf.os_factor_data; % could be smart to create a function for this part
+        X = tx_OSIFFT_parallel(:, symbol_index);
+        X_withCP = [X(end-CP_len+1:end); X];
+
+        tx_OSIFFT_withCP_parallel(:, symbol_index) = X_withCP; %#ok<AGROW>
+        
+
+    end
+
+
+    %% Parallel to serial conversion
+    tx_OFDM = tx_OSIFFT_withCP_parallel(:);
+   
+
+    % % NOISE (for bypass mode, add some noise to check if we introduce some errors)
+    % if conf.audiosystem == 'bypass'
+    %     output_text = "Add some noise to the signal"
+    %     noise = 1/sqrt(2*conf.SNR_lin)*randn(size(tx_signal_frame));
+    %     tx_signal_frame = tx_signal_frame + noise + 1j*noise ;
+    % end
+
+    % Normalize the signal
+    tx_OFDM = tx_OFDM / rms(tx_OFDM);
+    
+    tx_preamble_and_OFDM = [preamble_shaped; tx_OFDM; zeros(conf.gap_between_frames, 1)];
+
+    %% Up-Sampling of the TX signal
+
+    time = 0:conf.f_sampling^(-1):(length(tx_preamble_and_OFDM)-1) / conf.f_sampling;
+    txsignal = real(tx_preamble_and_OFDM.*exp(1j*2*pi*conf.f_carrier.*time.'));
+
+
+    % Normalize the signal (between -1 and +1 to avoid clipping in the .wav)
+    txsignal = txsignal / max(abs(txsignal));
 end
-
-
-
-% Up-Sampling of the TX signal
-time = 0:1/conf.f_s:(length(tx_signal_BB)/conf.f_s)-1/conf.f_s;
-txsignal = real(tx_signal_BB.*exp(1j*2*pi*conf.f_c.*time)).';
