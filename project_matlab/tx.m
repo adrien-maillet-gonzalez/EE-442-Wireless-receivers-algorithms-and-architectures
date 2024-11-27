@@ -24,7 +24,7 @@ function [txsignal conf] = tx(txbits,conf,k)
     preamble_shaped = matched_filter(preamble_up, conf);
 
     %% Training sequence
-    training_sequence_bpsk = preamble_gen(conf.N);
+    training_sequence_bpsk = preamble_generate(conf.N);
 
     %% Bitstream
     tx_qpsk = conf.qpsk(bi2de(reshape(txbits, size(txbits, 1)/2, 2), 'left-msb')+1).';

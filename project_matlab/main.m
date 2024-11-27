@@ -7,6 +7,7 @@ conf.audiosystem = 'bypass'; % Values: 'matlab','native','bypass'
 % Configure frequencies
 conf.f_carrier            = 4000;
 conf.f_sampling           = 48000;   % sampling rate
+conf.f_s                  = conf.f_sampling;
 conf.N                    = 10; % number of subcarriers
 conf.frequency_spacing    = 5;
 conf.f_symbol_data        = conf.frequency_spacing * conf.N; % symbol rate = 50 [Hz]
@@ -25,14 +26,13 @@ conf.cyclic_prefix_len    = conf.N / 2;
 conf.os_factor_data       = conf.f_sampling / conf.f_symbol_data;
 conf.os_factor_preamble   = conf.f_sampling / conf.f_symbol_preamble;
 
-
-
+conf.BW                   = ceil((conf.N+1)/2) * conf.f_sampling / conf.N;
 % default = 4'000
 
 
 conf.preamble_len         = 100;
-conf.tx_filter_len        = 20;
-conf.rx_filterlen         = 20;
+conf.tx_filter_len        = 60;
+conf.rx_filterlen         = 60;
 conf.rolloff              = 0.22;
 
 conf.bitsps               = 16;   % bits per audio sample

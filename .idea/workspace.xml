@@ -5,13 +5,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="ee2cb9d9-58fd-4871-b759-6c276438128e" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/project_matlab/matched_filter.m" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/project_matlab/frame_sync.m" beforeDir="false" afterPath="$PROJECT_DIR$/project_matlab/frame_sync.m" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/project_matlab/main.m" beforeDir="false" afterPath="$PROJECT_DIR$/project_matlab/main.m" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/project_matlab/preamble_generate.m" beforeDir="false" afterPath="$PROJECT_DIR$/project_matlab/preamble_generate.m" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/project_matlab/tx.m" beforeDir="false" afterPath="$PROJECT_DIR$/project_matlab/tx.m" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -66,7 +60,7 @@
       <workItem from="1732649754660" duration="29000" />
       <workItem from="1732651841310" duration="2594000" />
       <workItem from="1732657966146" duration="980000" />
-      <workItem from="1732659013387" duration="8430000" />
+      <workItem from="1732659013387" duration="9050000" />
     </task>
     <servers />
   </component>

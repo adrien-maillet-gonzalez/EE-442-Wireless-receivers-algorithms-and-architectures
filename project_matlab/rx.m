@@ -16,31 +16,37 @@ function [rxbits conf] = rx(rxsignal,conf,k)
 
 time = 0:1/conf.f_sampling:(length(rxsignal))/conf.f_sampling - 1/conf.f_sampling;
 
-% Signal Down-Conversion
+% Signal Down-Conversi
 r_dc = rxsignal .* exp(-1j*2*pi*conf.f_carrier*time');
 
 % Low pass filter around DC to keep only the valuable info
-r_bb = 2*lowpass(r_dc,conf);
+r_bb = 2*ofdmlowpass(r_dc,conf, conf.BW);
 
-
+%% Identify the beginning of the data
 % Demodulation of the RX signal
-pulse = rrc(conf.os_factor, conf.rolloff, conf.tx_filter_len*conf.os_factor);
 
-nexttil
-plot(pulse);
-title("Pulse");
+filtered_rx_signal = matched_filter(r_bb, conf);
+[start, theta] = frame_sync(filtered_rx_signal, conf.os_factor_preamble) %#ok<*NOPRT,ASGLU>
 
-filtered_rx_signal = conv(r_bb, pulse, 'same');
 
-% Use the preamble to get the index where the data starts
-[start, theta] = frame_sync(filtered_rx_signal, conf.os_factor)
+%% Start the conversion of the OFDM data
+% Down-Sample the data and keep only the one from the start index
+signal_len = conf.f_sampling * (conf.N + conf.cyclic_prefix_len)/conf.N;
+rx_data = r_bb(start:start+signal_len-1);
 
-nexttile
-plot(filtered_rx_signal(start:conf.os_factor:start + conf.os_factor*conf.nbits/2-1), 'r.');
-title("CONV no phase correction");
 
-% Down-Sample the data and keep only the one from the start idex
-rx_signal = filtered_rx_signal(start:conf.os_factor:start + conf.os_factor*conf.nbits/2-1).*exp(-1j * theta);
+%%
+%%
+%% 
+% Extract the training sequence and remove the cyclic prefix
+
+
+
+
+%%
+%%
+%%
+
 
 nexttile
 plot(rx_signal, 'b.');
@@ -49,3 +55,8 @@ title("CONV with phase correction");
 [~, idx] = min(abs(rx_signal - conf.qpsk).^2, [], 2);
 rxbits = reshape(de2bi(idx-1, 2, 'left-msb'), [], 1);
 
+
+
+
+
+end
