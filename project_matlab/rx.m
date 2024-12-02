@@ -16,10 +16,10 @@ function [rxbits conf] = rx(rxsignal,conf,k)
 
 time = 0:1/conf.f_sampling:(length(rxsignal))/conf.f_sampling - 1/conf.f_sampling;
 
-% Signal Down-Conversi
+% Signal Down-Conversion
 r_dc = rxsignal .* exp(-1j*2*pi*conf.f_carrier*time');
 
-% Low pass filter around DC to keep only the valuable info
+% Low-pass filter around DC to keep only the valuable info
 r_bb = 2*ofdmlowpass(r_dc,conf, conf.BW);
 
 %% Identify the beginning of the data
@@ -35,24 +35,40 @@ signal_len = conf.f_sampling * (conf.N + conf.cyclic_prefix_len)/conf.N;
 rx_data = r_bb(start:start+signal_len-1);
 
 
-%%
-%%
-%% 
-% Extract the training sequence and remove the cyclic prefix
+%% Extract the training sequence and remove the cyclic prefix
 
+% Compute the number of OFDM symbols in the received signal
+num_symbols = floor(length(rx_data) / (conf.N + conf.cyclic_prefix_len) / conf.os_factor_data);
 
+rx_no_cp = zeros(conf.N * conf.os_factor_data, num_symbols);
 
+for i=1:num_symbols
+    start_symbol = conf.cyclic_prefix_len * conf.os_factor_data + (i-1) * conf.os_factor_data * (conf.N + conf.cyclic_prefix_len) + 1;
+    end_symbol = conf.cyclic_prefix_len * conf.os_factor_data + (i-1) *  conf.os_factor_data * (conf.N + conf.cyclic_prefix_len) + conf.os_factor_data * conf.N;
+    rx_no_cp(:, i) = rx_data(start_symbol: end_symbol);
+end
 
-%%
-%%
-%%
+%% FFT Processing
+% Perform FFT on each OFDM symbol to convert to frequency domain
+rx_FFT = zeros(conf.N, num_symbols);
+
+for symbol_index = 1:num_symbols
+    rx_FFT(:, symbol_index) = osfft(rx_no_cp(:, symbol_index), conf.os_factor_data);
+end
+
+% Combine frequency domain symbols into a single vector for demodulation
+rx_training = rx_FFT(1:conf.N);
+rx_serial = rx_FFT(conf.N+1:end);
+
+%% Demodulation and Symbol Mapping
 
 
 nexttile
-plot(rx_signal, 'b.');
+plot(rx_serial, 'b.');
 title("CONV with phase correction");
+
 % Demapping of the symbols to data bits
-[~, idx] = min(abs(rx_signal - conf.qpsk).^2, [], 2);
+[~, idx] = min(abs(rx_serial.' - conf.qpsk).^2, [], 2);
 rxbits = reshape(de2bi(idx-1, 2, 'left-msb'), [], 1);
 
 

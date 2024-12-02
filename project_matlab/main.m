@@ -13,7 +13,6 @@ conf.frequency_spacing    = 5;
 conf.f_symbol_data        = conf.frequency_spacing * conf.N; % symbol rate = 50 [Hz]
 conf.f_symbol_preamble    = 1000; % 1'000 is the idea of coach
 
-
 conf.num_frames           = 1;       % number of frames to transmit
 conf.gap_between_frames   = 0;
 
@@ -167,7 +166,7 @@ for k=1:conf.num_frames
 end
     
     
-per = sum(res.biterrors > 0)/conf.nframes;
+per = sum(res.biterrors > 0)/conf.num_frames;
 ber = sum(res.biterrors)/sum(res.rxnbits)
 
 
