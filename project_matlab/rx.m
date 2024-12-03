@@ -14,7 +14,7 @@ function [rxbits conf] = rx(rxsignal,conf,k)
 %   conf        : configuration structure
 %
 
-time = 0:1/conf.f_sampling:(length(rxsignal))/conf.f_sampling - 1/conf.f_sampling;
+time = ( 0:1:(length(rxsignal)-1) ) ./ conf.f_sampling;
 
 % Signal Down-Conversion
 r_dc = rxsignal .* exp(-1j*2*pi*conf.f_carrier*time');
@@ -38,22 +38,19 @@ rx_data_with_cp = r_bb(start:start+signal_len_with_cp-1);
 
 %% Remove the cyclic prefix
 
-rx_symbols_with_cp = reshape(rx_data_with_cp, conf.os_factor_data * (conf.cyclic_prefix_len + conf.N) / conf.N, []);
+rx_symbols_with_cp = reshape(rx_data_with_cp, conf.os_factor_data * (conf.cyclic_prefix_len + conf.N), []);
 
-rx_symbols_no_cp = rx_symbols_with_cp(conf.os_factor_data * conf.cyclic_prefix_len / conf.N +1:end,:);
+rx_symbols_no_cp = rx_symbols_with_cp(conf.os_factor_data * conf.cyclic_prefix_len +1:end,:);
 
-rx_no_cp = rx_symbols_no_cp(:);
 %% FFT Processing
 % Perform FFT on each OFDM symbol to convert to frequency domain
-num_symbols_with_training = 1 + conf.num_symbols / conf.N;
-rx_parallel = reshape(rx_no_cp, [], num_symbols_with_training);
 
-
+num_symbols_with_training = 1 + conf.num_symbols/conf.N;
 
 rx_FFT = zeros(conf.N, num_symbols_with_training);
 
 for symbol_index = 1:num_symbols_with_training
-    rx_FFT(:, symbol_index) = osfft(rx_parallel(:, symbol_index), conf.os_factor_data);
+    rx_FFT(:, symbol_index) = osfft(rx_symbols_no_cp(:, symbol_index), conf.os_factor_data);
 end
 
 % Combine frequency domain symbols into a single vector for demodulation

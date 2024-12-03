@@ -11,13 +11,13 @@ conf.f_s                  = conf.f_sampling;
 conf.N                    = 10; % number of subcarriers
 conf.frequency_spacing    = 5;
 conf.f_symbol_data        = conf.frequency_spacing * conf.N; % symbol rate = 50 [Hz]
-conf.f_symbol_preamble    = 1000; % 1'000 is the idea of coach
+conf.f_symbol_preamble    = 500; 
 
 conf.num_frames           = 1;       % number of frames to transmit
 conf.gap_between_frames   = 0;
 
 
-conf.nbits                = 120;    % number of bits
+conf.nbits                = 80;    % number of bits
 conf.num_symbols          = conf.nbits / 2;
 
 conf.cyclic_prefix_len    = conf.N / 2;
@@ -82,9 +82,6 @@ for k=1:conf.num_frames
     % TODO: Implement tx() Transmit Function
     [txsignal conf] = tx(txbits,conf,k);
 
-    nexttile
-    plot(txsignal);
-    title("TX Signal");
     
     % % % % % % % % % % % %
     % Begin
@@ -96,6 +93,11 @@ for k=1:conf.num_frames
     peakvalue       = max(abs(txsignal));
     normtxsignal    = txsignal / (peakvalue + 0.3);
     
+    nexttile
+    plot(txsignal);
+    title("TX Signal");
+    
+
     % create vector for transmission
     rawtxsignal = [ zeros(conf.f_sampling,1) ; normtxsignal ;  zeros(conf.f_sampling,1) ]; % add padding before and after the signal
     rawtxsignal = [  rawtxsignal  zeros(size(rawtxsignal)) ]; % add second channel: no signal

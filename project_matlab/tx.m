@@ -21,16 +21,16 @@ function [txsignal conf] = tx(txbits,conf,k)
     preamble_up = upsample(preamble_bpsk, conf.os_factor_preamble);
 
     % Pulse shape the preamble
-    preamble_shaped = matched_filter(preamble_up, conf);
+    preamble = matched_filter(preamble_up, conf);
 
     %% Training sequence
-    training_sequence_bpsk = preamble_generate(conf.N);
+    conf.training_sequence_bpsk = ones(conf.N, 1);%2*randi([0, 1], conf.N, 1) - 1;
 
     %% Bitstream
     tx_qpsk = conf.qpsk(bi2de(reshape(txbits, size(txbits, 1)/2, 2), 'left-msb')+1).';
 
-    %% Concatenate the training sequence and the bitstream
-    tx_training_and_bitstream = [training_sequence_bpsk; tx_qpsk];
+    %% Concatenate the training sequence and the bitstream  %(CHECKED, IT WORKS AS DESIRED)
+    tx_training_and_bitstream = [conf.training_sequence_bpsk; tx_qpsk];
     % Serial to parallel conversion
     tx_parallel_symbols = reshape(tx_training_and_bitstream, conf.N, []);
 
@@ -70,17 +70,14 @@ function [txsignal conf] = tx(txbits,conf,k)
         tx_OFDM = tx_OFDM + noise + 1j*noise ;
     end
 
-    % Normalize the signal
+    preamble = preamble / rms(preamble);
     tx_OFDM = tx_OFDM / rms(tx_OFDM);
     
-    tx_preamble_and_OFDM = [preamble_shaped; tx_OFDM; zeros(conf.gap_between_frames, 1)];
+    signal = [preamble; tx_OFDM; zeros(conf.gap_between_frames, 1)];
 
     %% Up-Sampling of the TX signal
 
-    time = 0:conf.f_sampling^(-1):(length(tx_preamble_and_OFDM)-1) / conf.f_sampling;
-    txsignal = real(tx_preamble_and_OFDM.*exp(1j*2*pi*conf.f_carrier.*time.'));
+    time = (0:1:(length(signal)-1)) ./ conf.f_sampling;
+    txsignal = real(signal.*exp(1j*2*pi*conf.f_carrier.*time.'));
 
-
-    % Normalize the signal (between -1 and +1 to avoid clipping in the .wav)
-    txsignal = txsignal / max(abs(txsignal));
 end
