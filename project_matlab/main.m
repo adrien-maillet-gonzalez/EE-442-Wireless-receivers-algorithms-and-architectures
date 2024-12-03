@@ -9,7 +9,7 @@ conf.audiosystem = 'bypass'; % Values: 'matlab','native','bypass'
 conf.f_carrier            = 4000;
 conf.f_sampling           = 48000;   % sampling rate
 conf.f_s                  = conf.f_sampling;
-conf.N                    = 10;%256; % number of subcarriers
+conf.N                    = 256; % number of subcarriers
 conf.frequency_spacing    = 5;
 conf.f_symbol_data        = conf.frequency_spacing * conf.N % symbol rate = 50 [Hz]
 conf.f_symbol_preamble    = 500 
@@ -18,7 +18,7 @@ conf.num_frames           = 1;       % number of frames to transmit
 conf.gap_between_frames   = 0;
 
 
-conf.nbits                = 800;%256*4*2;    % number of bits
+conf.nbits                = 256*8;    % number of bits
 conf.num_symbols          = conf.nbits / 2;
 
 conf.cyclic_prefix_len    = conf.N / 2;

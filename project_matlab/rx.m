@@ -53,17 +53,15 @@ for symbol_index = 1:num_symbols_with_training
     rx_FFT(:, symbol_index) = osfft(rx_symbols_no_cp(:, symbol_index), conf.os_factor_data);
 end
 
-% Combine frequency domain symbols into a single vector for demodulation
-rx_training = rx_FFT(:, 1);
-rx_data = rx_FFT(:, 2:end);
-rx_serial = rx_data(:);
-
-
+%% Channel Estimation and Phase correction
 
 dataCorrected = phaseCorrection(rx_FFT, conf);
 rx_serial = dataCorrected(:);
 
 %% Demodulation and Symbol Mapping
+
+[~, idx] = min(abs(rx_serial - conf.qpsk).^2, [], 2);
+rxbits = reshape(de2bi(idx-1, 2, 'left-msb'), [], 1);
 
 nexttile
 hold on;
@@ -76,20 +74,15 @@ title("RX symbols");
 hold off;
 
 
-% Demapping of the symbols to data bits
-[~, idx] = min(abs(rx_serial - conf.qpsk).^2, [], 2);
-rxbits = reshape(de2bi(idx-1, 2, 'left-msb'), [], 1);
-
-
-
-
 end
+
+
 
 function dataCorrected = phaseCorrection(fftSignal, conf)
     bitstreamBPSK = conf.training_sequence_bpsk;
     nSymb = size(fftSignal, 2) - 1;
+    
     dataCorrected = [];
-    disp(size(fftSignal, 2))
     H = [];
 
     for k = 1 : nSymb
