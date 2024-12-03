@@ -17,7 +17,7 @@ conf.num_frames           = 1;       % number of frames to transmit
 conf.gap_between_frames   = 0;
 
 
-conf.nbits                = 80;    % number of bits
+conf.nbits                = 120;    % number of bits
 conf.num_symbols          = conf.nbits / 2;
 
 conf.cyclic_prefix_len    = conf.N / 2;
@@ -45,7 +45,7 @@ conf.qpsk                 = [-1-1j -1+1j 1+1j 1-1j]/sqrt(2);
 
 
 % Noise parameters
-conf.SNR_db               = 1000; 
+conf.SNR_db               = 10000; 
 conf.SNR_lin              = 10^(conf.SNR_db/10);
 
 
