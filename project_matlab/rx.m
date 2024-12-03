@@ -26,7 +26,7 @@ r_bb = 2*ofdmlowpass(r_dc,conf, conf.BW);
 % Demodulation of the RX signal
 
 filtered_rx_signal = matched_filter(r_bb, conf);
-[start, theta] = frame_sync(filtered_rx_signal, conf.os_factor_preamble) %#ok<*NOPRT,ASGLU>
+[start, ~] = frame_sync(filtered_rx_signal, conf.os_factor_preamble, conf) %#ok<*NOPRT>
 
 
 %% Start the conversion of the OFDM data
@@ -40,7 +40,7 @@ rx_data_with_cp = r_bb(start:start+signal_len_with_cp-1);
 
 rx_symbols_with_cp = reshape(rx_data_with_cp, conf.os_factor_data * (conf.cyclic_prefix_len + conf.N), []);
 
-rx_symbols_no_cp = rx_symbols_with_cp(conf.os_factor_data * conf.cyclic_prefix_len +1:end,:);
+rx_symbols_no_cp = rx_symbols_with_cp(conf.os_factor_data * conf.cyclic_prefix_len + 1:end,:);
 
 %% FFT Processing
 % Perform FFT on each OFDM symbol to convert to frequency domain
@@ -54,22 +54,103 @@ for symbol_index = 1:num_symbols_with_training
 end
 
 % Combine frequency domain symbols into a single vector for demodulation
-rx_training = rx_FFT(1:conf.N);
-rx_serial = rx_FFT(conf.N+1:end);
+rx_training = rx_FFT(:, 1);
+rx_data = rx_FFT(:, 2:end);
+rx_serial = rx_data(:);
+
+
+
+dataCorrected = phaseCorrection(rx_FFT, conf);
+rx_serial = dataCorrected(:);
 
 %% Demodulation and Symbol Mapping
 
-
 nexttile
-plot(rx_serial, 'b.');
-title("CONV with phase correction");
+hold on;
+xline(0, '-.')
+yline(0, '-.')
+plot(rx_serial / rms(rx_serial), 'b.');
+plot(conf.qpsk, 'rx');
+axis padded
+title("RX symbols");
+hold off;
+
 
 % Demapping of the symbols to data bits
-[~, idx] = min(abs(rx_serial.' - conf.qpsk).^2, [], 2);
+[~, idx] = min(abs(rx_serial - conf.qpsk).^2, [], 2);
 rxbits = reshape(de2bi(idx-1, 2, 'left-msb'), [], 1);
 
 
 
 
+end
 
+function dataCorrected = phaseCorrection(fftSignal, conf)
+    bitstreamBPSK = conf.training_sequence_bpsk;
+    nSymb = size(fftSignal, 2) - 1;
+    dataCorrected = [];
+    disp(size(fftSignal, 2))
+    H = [];
+
+    for k = 1 : nSymb
+        H_hat = fftSignal(:,1)./bitstreamBPSK;
+              
+        correction = fftSignal(:,k+1)./abs(H_hat).*exp(-1j*mod(angle(H_hat),2*pi));
+        dataCorrected = [dataCorrected correction];
+        H = [H H_hat];
+    end
+
+    
+    f = 0:conf.BW/conf.N:conf.BW*(1-1/conf.N);
+    f = f + conf.f_carrier - conf.BW/2; 
+    nexttile
+    for i = 1:size(H,2)
+
+        
+        plot(f,20*log10(abs(H(:,i))))
+        hold on
+        
+    end
+    title("Magnitude of frequency response")
+    xlabel("Frequency [Hz]")
+    ylabel("Magnitude [dB]")
+    xlim([f(1) f(end)]);
+    
+    nexttile
+    for i = 1:size(H,2)
+
+        
+        plot(f,unwrap(angle(H(:,i))))
+        hold on
+        
+    end
+    title("Phase of frequency response")
+    xlabel("Frequency [Hz]")
+    ylabel("Phase [rad]")
+    xlim([f(1) f(end)]);
+    
+    
+    nexttile
+    for i = 1:size(H,2)
+
+        
+        plot(abs(ifft(H(:,i))))
+        hold on
+        
+    end
+    title("IFFT of the spectrum")
+    xlabel("Number of sub-carrier")
+    ylabel("Amplitude of IFFT")
+    xline(8,'r','8')
+    xline(16, 'g', '16')
+    xline(32, 'b', '32')
+    xlim([0 256])
+    
+    
+    
+    
+    
+    
+    
+    
 end

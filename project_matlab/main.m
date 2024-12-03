@@ -1,5 +1,6 @@
 close all; clear all; clc;
 
+"start main" %#ok<*NOPTS>
 
 % Configuration Values
 conf.audiosystem = 'bypass'; % Values: 'matlab','native','bypass'
@@ -8,16 +9,16 @@ conf.audiosystem = 'bypass'; % Values: 'matlab','native','bypass'
 conf.f_carrier            = 4000;
 conf.f_sampling           = 48000;   % sampling rate
 conf.f_s                  = conf.f_sampling;
-conf.N                    = 10; % number of subcarriers
+conf.N                    = 10;%256; % number of subcarriers
 conf.frequency_spacing    = 5;
-conf.f_symbol_data        = conf.frequency_spacing * conf.N; % symbol rate = 50 [Hz]
-conf.f_symbol_preamble    = 500; 
+conf.f_symbol_data        = conf.frequency_spacing * conf.N % symbol rate = 50 [Hz]
+conf.f_symbol_preamble    = 500 
 
 conf.num_frames           = 1;       % number of frames to transmit
 conf.gap_between_frames   = 0;
 
 
-conf.nbits                = 80;    % number of bits
+conf.nbits                = 800;%256*4*2;    % number of bits
 conf.num_symbols          = conf.nbits / 2;
 
 conf.cyclic_prefix_len    = conf.N / 2;
@@ -26,13 +27,13 @@ conf.cyclic_prefix_len    = conf.N / 2;
 conf.os_factor_data       = conf.f_sampling / conf.f_symbol_data;
 conf.os_factor_preamble   = conf.f_sampling / conf.f_symbol_preamble;
 
-conf.BW                   = ceil((conf.N+1)/2) * conf.f_sampling / conf.N;
+conf.BW                   = ceil((conf.N+1)/2) * conf.frequency_spacing;
 % default = 4'000
 
 
 conf.preamble_len         = 100;
-conf.tx_filter_len        = 60;
-conf.rx_filterlen         = 60;
+conf.tx_filter_len        = 10*conf.os_factor_preamble; % essayer de trouver une manière de déterminer leur valeur bien
+conf.rx_filterlen         = 10*conf.os_factor_preamble;
 conf.rolloff              = 0.22;
 
 conf.bitsps               = 16;   % bits per audio sample
@@ -45,7 +46,7 @@ conf.qpsk                 = [-1-1j -1+1j 1+1j 1-1j]/sqrt(2);
 
 
 % Noise parameters
-conf.SNR_db               = 10000; 
+conf.SNR_db               = 5;%54; 
 conf.SNR_lin              = 10^(conf.SNR_db/10);
 
 
@@ -68,7 +69,7 @@ res.rxnbits     = zeros(conf.num_frames,1);
 
 
 %plotting options for the nice unique plot thing
-tiledlayout(2,3)
+tiledlayout(2,4)
 
 
 
@@ -87,7 +88,7 @@ for k=1:conf.num_frames
     % Begin
     % Audio Transmission
     %
-
+    for d = 1
     
     % normalize values (to avoid saturation of the speaker)
     peakvalue       = max(abs(txsignal));
@@ -150,6 +151,7 @@ for k=1:conf.num_frames
         rxsignal    = rawrxsignal;
     end
     
+    end
     %
     % End
     % Audio Transmission   

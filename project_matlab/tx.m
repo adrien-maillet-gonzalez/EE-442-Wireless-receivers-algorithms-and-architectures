@@ -15,16 +15,16 @@ function [txsignal conf] = tx(txbits,conf,k)
 
     %% Preamble (do we need to normalize the preamble before normalizing the overall signal)
     % Generate the preamble in BPSK
-    preamble_bpsk = preamble_generate(100);
+    conf.preamble_bpsk = preamble_generate(100);
 
     % Up-sample the preamble
-    preamble_up = upsample(preamble_bpsk, conf.os_factor_preamble);
+    preamble_up = upsample(conf.preamble_bpsk, conf.os_factor_preamble);
 
     % Pulse shape the preamble
     preamble = matched_filter(preamble_up, conf);
 
     %% Training sequence
-    conf.training_sequence_bpsk = ones(conf.N, 1);%2*randi([0, 1], conf.N, 1) - 1;
+    conf.training_sequence_bpsk = 2*randi([0, 1], conf.N, 1) - 1;
 
     %% Bitstream
     tx_qpsk = conf.qpsk(bi2de(reshape(txbits, size(txbits, 1)/2, 2), 'left-msb')+1).';
@@ -63,19 +63,22 @@ function [txsignal conf] = tx(txbits,conf,k)
     tx_OFDM = tx_OSIFFT_withCP_parallel(:);
    
 
-    % NOISE (for bypass mode, add some noise to check if we introduce some errors)
-    if conf.audiosystem == 'bypass'
-        output_text = "Add some noise to the signal"
-        noise = 1/sqrt(2*conf.SNR_lin)*randn(size(tx_OFDM));
-        tx_OFDM = tx_OFDM + noise + 1j*noise ;
-    end
-
-    preamble = preamble / rms(preamble);
+    %% Normalize the signals
     tx_OFDM = tx_OFDM / rms(tx_OFDM);
+    preamble = preamble / rms(preamble); % Le fait de faire comme ça permet d'avoir le preamble et le Signal avec exactement la même puissance
     
+    %% Concatenate the overall message to send (Starting with the preamble and followed by the data)
     signal = [preamble; tx_OFDM; zeros(conf.gap_between_frames, 1)];
 
-    %% Up-Sampling of the TX signal
+    
+    %% NOISE (for bypass mode, add some noise to check if we introduce some errors)
+    if conf.audiosystem == 'bypass'
+        "Add some noise to the signal" %#ok<NOPRT>
+        noise = 1/sqrt(2*conf.SNR_lin)*randn(size(signal));
+        signal = signal + noise + 1j*noise ;
+    end
+
+    %% Up-Convert of the TX signal
 
     time = (0:1:(length(signal)-1)) ./ conf.f_sampling;
     txsignal = real(signal.*exp(1j*2*pi*conf.f_carrier.*time.'));
