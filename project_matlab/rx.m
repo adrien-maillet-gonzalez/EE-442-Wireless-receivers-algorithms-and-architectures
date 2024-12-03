@@ -31,29 +31,31 @@ filtered_rx_signal = matched_filter(r_bb, conf);
 
 %% Start the conversion of the OFDM data
 % Down-Sample the data and keep only the one from the start index
-signal_len = conf.f_sampling * (conf.N + conf.cyclic_prefix_len)/conf.N;
-rx_data = r_bb(start:start+signal_len-1);
+signal_len_with_cp = conf.N * conf.os_factor_data * (1 + conf.num_symbols / conf.N) * (conf.cyclic_prefix_len + conf.N) / conf.N;
+rx_data_with_cp = r_bb(start:start+signal_len_with_cp-1);
 
 
-%% Extract the training sequence and remove the cyclic prefix
 
-% Compute the number of OFDM symbols in the received signal
-num_symbols = floor(length(rx_data) / (conf.N + conf.cyclic_prefix_len) / conf.os_factor_data);
+%% Remove the cyclic prefix
 
-rx_no_cp = zeros(conf.N * conf.os_factor_data, num_symbols);
+rx_symbols_with_cp = reshape(rx_data_with_cp, conf.os_factor_data * (conf.cyclic_prefix_len + conf.N) / conf.N, []);
 
-for i=1:num_symbols
-    start_symbol = conf.cyclic_prefix_len * conf.os_factor_data + (i-1) * conf.os_factor_data * (conf.N + conf.cyclic_prefix_len) + 1;
-    end_symbol = conf.cyclic_prefix_len * conf.os_factor_data + (i-1) *  conf.os_factor_data * (conf.N + conf.cyclic_prefix_len) + conf.os_factor_data * conf.N;
-    rx_no_cp(:, i) = rx_data(start_symbol: end_symbol);
-end
+rx_symbols_no_cp = rx_symbols_with_cp(conf.os_factor_data * conf.cyclic_prefix_len/ conf.N +1:end,:);
 
+rx_no_cp = rx_symbols_no_cp(:);
 %% FFT Processing
 % Perform FFT on each OFDM symbol to convert to frequency domain
-rx_FFT = zeros(conf.N, num_symbols);
+num_symbols_with_training = 1 + conf.num_symbols / conf.N;
+rx_parallel = reshape(rx_no_cp, [], 10);
 
-for symbol_index = 1:num_symbols
-    rx_FFT(:, symbol_index) = osfft(rx_no_cp(:, symbol_index), conf.os_factor_data);
+
+
+rx_FFT = zeros(conf.N, num_symbols_with_training);
+
+for symbol_index = 1:num_symbols_with_training
+    start_data = (symbol_index-1)*conf.os_factor_data+1;
+    input_fft = rx_parallel(start_data:start_data+ conf.os_factor_data-1, :);
+    rx_FFT(:, symbol_index) = osfft(input_fft, conf.os_factor_data);
 end
 
 % Combine frequency domain symbols into a single vector for demodulation

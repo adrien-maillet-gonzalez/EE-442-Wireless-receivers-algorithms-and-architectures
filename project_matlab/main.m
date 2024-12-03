@@ -18,6 +18,7 @@ conf.gap_between_frames   = 0;
 
 
 conf.nbits                = 80;    % number of bits
+conf.num_symbols          = conf.nbits / 2;
 
 conf.cyclic_prefix_len    = conf.N / 2;
 
@@ -44,7 +45,7 @@ conf.qpsk                 = [-1-1j -1+1j 1+1j 1-1j]/sqrt(2);
 
 
 % Noise parameters
-conf.SNR_db               = 2000; 
+conf.SNR_db               = 1000; 
 conf.SNR_lin              = 10^(conf.SNR_db/10);
 
 
@@ -173,7 +174,7 @@ ber = sum(res.biterrors)/sum(res.rxnbits)
 % nexttile
 % semilogy(freq_range, ber, 'bx-' ,'LineWidth',3);
 % title("BER (log)");
-
-xlabel('Symbol rate')
-ylabel('BER')
-grid on
+% 
+% xlabel('Symbol rate')
+% ylabel('BER')
+% grid on

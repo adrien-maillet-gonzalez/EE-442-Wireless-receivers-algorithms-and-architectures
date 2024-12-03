@@ -31,7 +31,6 @@ function [txsignal conf] = tx(txbits,conf,k)
 
     %% Concatenate the training sequence and the bitstream
     tx_training_and_bitstream = [training_sequence_bpsk; tx_qpsk];
-
     % Serial to parallel conversion
     tx_parallel_symbols = reshape(tx_training_and_bitstream, conf.N, []);
 
@@ -64,12 +63,12 @@ function [txsignal conf] = tx(txbits,conf,k)
     tx_OFDM = tx_OSIFFT_withCP_parallel(:);
    
 
-    % % NOISE (for bypass mode, add some noise to check if we introduce some errors)
-    % if conf.audiosystem == 'bypass'
-    %     output_text = "Add some noise to the signal"
-    %     noise = 1/sqrt(2*conf.SNR_lin)*randn(size(tx_signal_frame));
-    %     tx_signal_frame = tx_signal_frame + noise + 1j*noise ;
-    % end
+    % NOISE (for bypass mode, add some noise to check if we introduce some errors)
+    if conf.audiosystem == 'bypass'
+        output_text = "Add some noise to the signal"
+        noise = 1/sqrt(2*conf.SNR_lin)*randn(size(tx_OFDM));
+        tx_OFDM = tx_OFDM + noise + 1j*noise ;
+    end
 
     % Normalize the signal
     tx_OFDM = tx_OFDM / rms(tx_OFDM);
