@@ -3,7 +3,7 @@ close all; clear all; clc;
 "start main" %#ok<*NOPTS>
 
 % Configuration Values
-conf.audiosystem = 'bypass'; % Values: 'matlab','native','bypass'
+conf.audiosystem = 'matlab'; % Values: 'matlab','native','bypass'
 
 %% Upload image
 
@@ -32,7 +32,7 @@ conf.gap_between_frames   = 0;
 conf.nbits                = size(binary_stream, 1);%256*2;    % number of bits
 conf.num_symbols          = conf.nbits / 2;
 
-conf.cyclic_prefix_len    = conf.N / 10;
+conf.cyclic_prefix_len    = conf.N / 64;
 
 % Over-sampling factors
 conf.os_factor_data       = conf.f_sampling / conf.f_symbol_data;

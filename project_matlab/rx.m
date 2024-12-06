@@ -99,7 +99,11 @@ function dataCorrected = phaseCorrection(fftSignal, conf)
         new_theta_hat = mod(angle(current_corrected), 2*pi) - perfect_theta(ind).';
         theta_hat(:, k+1) = mod(theta_hat(:, k) + 0.01*new_theta_hat(:), 2*pi);
 
-        dataCorrected(:, k) = fftSignal(:,k+1)./abs(H_hat).*exp(-1j*theta_hat(:,k+1)); % k+1
+        % Use phase tracking
+        % dataCorrected(:, k) = fftSignal(:,k+1)./abs(H_hat).*exp(-1j*theta_hat(:,k+1)); % k+1
+
+        % Do not use phase tracking
+        dataCorrected(:, k) = fftSignal(:,k+1)./abs(H_hat).*exp(-1j*mod(angle(H_hat),2*pi)); % k+1
     end
 
 
