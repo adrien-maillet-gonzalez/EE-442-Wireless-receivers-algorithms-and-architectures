@@ -75,7 +75,7 @@ axis padded
 title("RX symbols");
 hold off;
 
-image = image_decoder(rxbits,conf.original_image);%bitstream2image %demapper(rx_serial)
+image = bitstream2image(rxbits,conf.original_image);%bitstream2image %demapper(rx_serial)
 
 end
 

@@ -28,7 +28,7 @@ image = bi2de(b1,"left-msb");
 image = reshape(image, image_size(2), image_size(1));
 
 % displax image
-figure;
+nexttile
 imshow(image,[0 2^8-1]);
-
+title('reconstructed image')
 return

@@ -62,7 +62,7 @@ conf.qpsk                 = [-1-1j -1+1j 1+1j 1-1j]/sqrt(2);
 
 
 % Noise parameters
-conf.SNR_db               = 50;%54; 
+conf.SNR_db               = 1;%54; 
 conf.SNR_lin              = 10^(conf.SNR_db/10);
 
 
