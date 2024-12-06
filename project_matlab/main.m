@@ -5,23 +5,34 @@ close all; clear all; clc;
 % Configuration Values
 conf.audiosystem = 'bypass'; % Values: 'matlab','native','bypass'
 
+%% Upload image
+
+rng(123);
+image = imread('pyramid.png');
+gray_image = im2gray(image);
+conf.image_size = size(gray_image);
+
+image_vector = gray_image(:);
+binary_stream_matrix = de2bi(image_vector,"left-msb");
+binary_stream = binary_stream_matrix(:);
+
 % Configure frequencies
 conf.f_carrier            = 4000;
 conf.f_sampling           = 48000;   % sampling rate
 conf.f_s                  = conf.f_sampling;
-conf.N                    = 256; % number of subcarriers
+conf.N                    = 1024;%256; % number of subcarriers
 conf.frequency_spacing    = 5;
 conf.f_symbol_data        = conf.frequency_spacing * conf.N % symbol rate = 50 [Hz]
-conf.f_symbol_preamble    = 500 
+conf.f_symbol_preamble    = 1000;
 
 conf.num_frames           = 1;       % number of frames to transmit
 conf.gap_between_frames   = 0;
 
 
-conf.nbits                = 256*8;    % number of bits
+conf.nbits                = size(binary_stream, 1);%256*2;    % number of bits
 conf.num_symbols          = conf.nbits / 2;
 
-conf.cyclic_prefix_len    = conf.N / 2;
+conf.cyclic_prefix_len    = conf.N / 10;
 
 % Over-sampling factors
 conf.os_factor_data       = conf.f_sampling / conf.f_symbol_data;
@@ -78,7 +89,7 @@ tiledlayout(2,4)
 for k=1:conf.num_frames
     
     % Generate random data
-    txbits = randi([0 1],conf.nbits,1);
+    txbits = binary_stream;%randi([0 1],conf.nbits,1);
     
     % TODO: Implement tx() Transmit Function
     [txsignal conf] = tx(txbits,conf,k);
@@ -92,7 +103,7 @@ for k=1:conf.num_frames
     
     % normalize values (to avoid saturation of the speaker)
     peakvalue       = max(abs(txsignal));
-    normtxsignal    = txsignal / (peakvalue + 0.3);
+    normtxsignal    = txsignal / (peakvalue + 0.6);
     
     nexttile
     plot(txsignal);
@@ -174,6 +185,25 @@ end
 per = sum(res.biterrors > 0)/conf.num_frames;
 ber = sum(res.biterrors)/sum(res.rxnbits)
 
+
+%% output the image
+
+% % error handling
+% if length(rxbits) ~= 8 * prod(conf.image_size)
+%   error('Input vector has wrong size.')
+% end
+
+% convert to uint8
+rxbits_8bits = reshape(rxbits, [], 8);
+gray_image_rx = bi2de(rxbits_8bits,"left-msb");
+
+
+% reshape into image format
+gray_image_rx = reshape(gray_image_rx, conf.image_size);
+
+% displax image
+figure;
+imshow(gray_image_rx,[0 255]);
 
 % nexttile
 % semilogy(freq_range, ber, 'bx-' ,'LineWidth',3);
