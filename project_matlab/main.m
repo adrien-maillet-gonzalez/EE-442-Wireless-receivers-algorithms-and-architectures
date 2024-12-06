@@ -2,8 +2,19 @@ close all; clear all; clc;
 
 "start main" %#ok<*NOPTS>
 
+%load image file
+load eiffel_tower.mat
+image_input=true;%false%true
+
+image = imread('lena_256.png');
+gray_image = im2gray(image);
+
+
 % Configuration Values
 conf.audiosystem = 'bypass'; % Values: 'matlab','native','bypass'
+
+% Image characteristics
+conf.original_image = size(gray_image);
 
 % Configure frequencies
 conf.f_carrier            = 4000;
@@ -17,8 +28,13 @@ conf.f_symbol_preamble    = 500
 conf.num_frames           = 1;       % number of frames to transmit
 conf.gap_between_frames   = 0;
 
+if image_input
+    conf.nbits=prod(conf.original_image) * 8;
+else
+    conf.nbits= 256*8;    % number of bits
+end
 
-conf.nbits                = 256*8;    % number of bits
+
 conf.num_symbols          = conf.nbits / 2;
 
 conf.cyclic_prefix_len    = conf.N / 2;
@@ -46,7 +62,7 @@ conf.qpsk                 = [-1-1j -1+1j 1+1j 1-1j]/sqrt(2);
 
 
 % Noise parameters
-conf.SNR_db               = 5;%54; 
+conf.SNR_db               = 50;%54; 
 conf.SNR_lin              = 10^(conf.SNR_db/10);
 
 
@@ -78,7 +94,11 @@ tiledlayout(2,4)
 for k=1:conf.num_frames
     
     % Generate random data
-    txbits = randi([0 1],conf.nbits,1);
+    if image_input
+        txbits=image2bitstream(conf, gray_image);
+    else
+        txbits = randi([0 1],conf.nbits,1);
+    end
     
     % TODO: Implement tx() Transmit Function
     [txsignal conf] = tx(txbits,conf,k);

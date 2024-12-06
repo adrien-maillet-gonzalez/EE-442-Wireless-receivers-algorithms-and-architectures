@@ -58,6 +58,8 @@ end
 dataCorrected = phaseCorrection(rx_FFT, conf);
 rx_serial = dataCorrected(:);
 
+
+
 %% Demodulation and Symbol Mapping
 
 [~, idx] = min(abs(rx_serial - conf.qpsk).^2, [], 2);
@@ -73,6 +75,7 @@ axis padded
 title("RX symbols");
 hold off;
 
+image = image_decoder(demapper(rx_serial),conf.original_image);%bitstream2image
 
 end
 
