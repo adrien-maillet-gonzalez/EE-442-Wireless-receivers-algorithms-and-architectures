@@ -12,5 +12,5 @@ function [after] = ofdmlowpass(before,conf,f)
 % application. For very high symbol rates and/or low carrier frequencies
 % it might need tweaking.
 %
-after = lowpass(before,f,conf.f_s,StopbandAttenuation=30);
+after = lowpass(before,f,conf.f_sampling,StopbandAttenuation=30);
 

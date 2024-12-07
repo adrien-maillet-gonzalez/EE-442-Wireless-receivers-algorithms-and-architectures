@@ -29,19 +29,13 @@ function [txsignal conf] = tx(txbits,conf,k)
     %% Bitstream
     tx_qpsk = conf.qpsk(bi2de(reshape(txbits, size(txbits, 1)/2, 2), 'left-msb')+1).';
 
-    %% Concatenate the training sequence and the bitstream  %(CHECKED, IT WORKS AS DESIRED)
+    %% Concatenate the training sequence and the bitstream
 
-    % Here we add some training sequence every 20 batch of information, we
-    % need to correct the data RX side as well
-    
     tx_parallel_symbols = reshape(tx_qpsk, conf.N, []);
-
-    %for tests
-    conf.tx_parallel_symbols = tx_parallel_symbols;
 
     size_init_tx_parallel = size(tx_parallel_symbols, 2);
 
-    conf.training_period = size_init_tx_parallel/16; % use '-1' for only one training at the start
+    conf.training_period = size_init_tx_parallel/32; % use '-1' for only one training at the start
     
 
     new_tx_parallel_symbols = [];
