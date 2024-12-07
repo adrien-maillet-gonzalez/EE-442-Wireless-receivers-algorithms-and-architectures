@@ -30,9 +30,46 @@ function [txsignal conf] = tx(txbits,conf,k)
     tx_qpsk = conf.qpsk(bi2de(reshape(txbits, size(txbits, 1)/2, 2), 'left-msb')+1).';
 
     %% Concatenate the training sequence and the bitstream  %(CHECKED, IT WORKS AS DESIRED)
-    tx_training_and_bitstream = [conf.training_sequence_bpsk; tx_qpsk];
-    % Serial to parallel conversion
-    tx_parallel_symbols = reshape(tx_training_and_bitstream, conf.N, []);
+
+    % Here we add some training sequence every 20 batch of information, we
+    % need to correct the data RX side as well
+    
+    tx_parallel_symbols = reshape(tx_qpsk, conf.N, []);
+
+    %for tests
+    conf.tx_parallel_symbols = tx_parallel_symbols;
+
+    size_init_tx_parallel = size(tx_parallel_symbols, 2);
+
+    conf.training_period = size_init_tx_parallel/16; % use '-1' for only one training at the start
+    
+
+    new_tx_parallel_symbols = [];
+    idx = 1;
+    conf.num_training = 0;
+
+    if conf.training_period == -1
+        conf.num_training = 1;
+        new_tx_parallel_symbols = [conf.training_sequence_bpsk, tx_parallel_symbols];
+
+    else
+        while idx < size_init_tx_parallel
+    
+            if idx + conf.training_period > size_init_tx_parallel
+                new_tx_parallel_symbols = [new_tx_parallel_symbols, conf.training_sequence_bpsk, tx_parallel_symbols(:, idx:size_init_tx_parallel)];
+            else
+                new_tx_parallel_symbols = [new_tx_parallel_symbols, conf.training_sequence_bpsk, tx_parallel_symbols(:, (0:conf.training_period-1) + idx)];
+            end
+            
+            idx = idx + conf.training_period;
+            conf.num_training = conf.num_training + 1;
+        end
+    end
+
+
+    tx_parallel_symbols = new_tx_parallel_symbols;
+    conf.new_tx_parallel_symbols = tx_parallel_symbols;
+    
 
     %% OS-Inv-FFT (OSIFFT)
 

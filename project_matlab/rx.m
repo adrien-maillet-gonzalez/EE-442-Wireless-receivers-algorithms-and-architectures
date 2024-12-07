@@ -31,7 +31,7 @@ filtered_rx_signal = matched_filter(r_bb, conf);
 
 %% Start the conversion of the OFDM data
 % Down-Sample the data and keep only the one from the start index
-signal_len_with_cp = conf.N * conf.os_factor_data * (1 + conf.num_symbols / conf.N) * (conf.cyclic_prefix_len + conf.N) / conf.N;
+signal_len_with_cp = conf.N * conf.os_factor_data * (conf.num_training + conf.num_symbols / conf.N) * (conf.cyclic_prefix_len + conf.N) / conf.N;
 rx_data_with_cp = r_bb(start:start+signal_len_with_cp-1);
 
 
@@ -45,7 +45,7 @@ rx_symbols_no_cp = rx_symbols_with_cp(conf.os_factor_data * conf.cyclic_prefix_l
 %% FFT Processing
 % Perform FFT on each OFDM symbol to convert to frequency domain
 
-num_symbols_with_training = 1 + conf.num_symbols/conf.N;
+num_symbols_with_training = conf.num_training + conf.num_symbols/conf.N;
 
 rx_FFT = zeros(conf.N, num_symbols_with_training);
 
@@ -79,31 +79,46 @@ end
 
 
 function dataCorrected = phaseCorrection(fftSignal, conf)
-    nSymb = size(fftSignal, 2) - 1;
+    nSymb = size(fftSignal, 2) - conf.num_training;
     
     dataCorrected = zeros(size(fftSignal, 1), nSymb);
     theta_hat = zeros(size(fftSignal, 1), nSymb);
 
     perfect_theta = pi/4 .* (1:2:7);
 
-    H_hat = fftSignal(:,1)./conf.training_sequence_bpsk; % Imagine we have different Training sequences, we would add a loop here
+    if conf.training_period == -1
+        H_hat = fftSignal(:,1)./conf.training_sequence_bpsk; % Imagine we have different Training sequences, we would add a loop here
+    else
+        H_hat = fftSignal(:,1:conf.training_period+1:end)./conf.training_sequence_bpsk; % Imagine we have different Training sequences, we would add a loop here
+    end
 
-    theta_hat(:, 1) = mod(angle(H_hat),2*pi);
+    train_idx = 1;
+    symbol_increment = 0;
 
     %% Phase tracking
 
-    for k = 1 : nSymb % if we use another training sequence, we need to change the training sequence, ex: if k > 4 we change
+    
 
-        current_corrected = fftSignal(:,k+1)./abs(H_hat).*exp(-1j*theta_hat(:,k));
-        [~, ind] = min(abs(perfect_theta.' - mod(angle(current_corrected), 2*pi).'));
-        new_theta_hat = mod(angle(current_corrected), 2*pi) - perfect_theta(ind).';
-        theta_hat(:, k+1) = mod(theta_hat(:, k) + 0.01*new_theta_hat(:), 2*pi);
+    for k = 1 : nSymb % if we use another training sequence, we need to change the training sequence, ex: if k > 4 we change
+        
+        % current_corrected = fftSignal(:,k+1)./abs(H_hat).*exp(-1j*theta_hat(:,k));
+        % [~, ind] = min(abs(perfect_theta.' - mod(angle(current_corrected), 2*pi).'));
+        % new_theta_hat = mod(angle(current_corrected), 2*pi) - perfect_theta(ind).';
+        % theta_hat(:, k+1) = mod(theta_hat(:, k) + 0.01*new_theta_hat(:), 2*pi);
 
         % Use phase tracking
         % dataCorrected(:, k) = fftSignal(:,k+1)./abs(H_hat).*exp(-1j*theta_hat(:,k+1)); % k+1
 
+        
+
         % Do not use phase tracking
-        dataCorrected(:, k) = fftSignal(:,k+1)./abs(H_hat).*exp(-1j*mod(angle(H_hat),2*pi)); % k+1
+        if symbol_increment == conf.training_period && conf.training_period ~= -1
+            train_idx = train_idx + 1;
+            symbol_increment = 0;
+            
+        end
+        dataCorrected(:, k) = fftSignal(:,k+train_idx)./abs(H_hat(:, 1)).*exp(-1j*mod(angle(H_hat(:, 1)),2*pi));
+        symbol_increment = symbol_increment + 1;
     end
 
 
