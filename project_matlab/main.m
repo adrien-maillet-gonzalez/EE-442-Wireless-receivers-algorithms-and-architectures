@@ -1,69 +1,74 @@
 close all; clear all; clc;
-
-"start main" %#ok<*NOPTS>
+rng(123);
 
 % Configuration Values
-conf.audiosystem = 'matlab'; % Values: 'matlab','native','bypass'
+conf.audiosystem = 'bypass'; % Values: 'matlab','native','bypass'
+conf.data_type = 'image'; % Values: 'image', 'random'
+conf.enable_phase_tracking = 1;
+conf.enable_multi_training = 1;
 
 %% Upload image
-
-rng(123);
 image = imread('pyramid.png');
+
 gray_image = im2gray(image);
 conf.image_size = size(gray_image);
-
 image_vector = gray_image(:);
 binary_stream_matrix = de2bi(image_vector,"left-msb");
+
 binary_stream = binary_stream_matrix(:);
 
-% Configure frequencies
+%% Select the data to transmit
+
+if conf.data_type == 'image'
+    txbits = binary_stream;
+
+elseif conf.data_type == 'random'
+    txbits = randi([0 1],256*12,1);
+
+end
+
+%% Configure frequencies
 conf.f_carrier            = 4000;
-conf.f_sampling           = 48000;   % sampling rate
-conf.f_s                  = conf.f_sampling;
 conf.N                    = 1024;%256; % number of subcarriers
-conf.frequency_spacing    = 5;
-conf.f_symbol_data        = conf.frequency_spacing * conf.N % symbol rate = 50 [Hz]
-conf.f_symbol_preamble    = 1000;
-
-conf.num_frames           = 1;       % number of frames to transmit
-conf.gap_between_frames   = 0;
-
-
-conf.nbits                = size(binary_stream, 1);%256*12;%%    % number of bits
-conf.num_symbols          = conf.nbits / 2;
-
-conf.cyclic_prefix_len    = conf.N / 4;
-
-% Over-sampling factors
-conf.os_factor_data       = conf.f_sampling / conf.f_symbol_data;
-conf.os_factor_preamble   = conf.f_sampling / conf.f_symbol_preamble;
-
-conf.BW                   = ceil((conf.N+1)/2) * conf.frequency_spacing;
-% default = 4'000
-
-
+conf.cyclic_prefix_len    = conf.N / 8;
 conf.preamble_len         = 100;
-conf.tx_filter_len        = 10*conf.os_factor_preamble; % essayer de trouver une manière de déterminer leur valeur bien
-conf.rx_filterlen         = 10*conf.os_factor_preamble;
-conf.rolloff              = 0.22;
 
-conf.bitsps               = 16;   % bits per audio sample
+% DO NOT TOUCH
+    conf.f_sampling           = 48000;   % sampling rate
+    %conf.f_s                  = conf.f_sampling;
+    conf.frequency_spacing    = 5;
+    conf.f_symbol_data        = conf.frequency_spacing * conf.N; % symbol rate = 50 [Hz]
+    conf.f_symbol_preamble    = 1000;
+    
+    conf.num_frames           = 1;       % number of frames to transmit
+    conf.gap_between_frames   = 0;
 
+    conf.nbits                = size(txbits, 1); % number of bits
+    conf.num_symbols          = conf.nbits / 2;
 
-
-
-% Modulation
-conf.qpsk                 = [-1-1j -1+1j 1+1j 1-1j]/sqrt(2);
-
-
-% Noise parameters
-conf.SNR_db               = 5;%54; 
-conf.SNR_lin              = 10^(conf.SNR_db/10);
+    % Over-sampling factors
+    conf.os_factor_data       = conf.f_sampling / conf.f_symbol_data;
+    conf.os_factor_preamble   = conf.f_sampling / conf.f_symbol_preamble;
+    
+    conf.BW                   = ceil((conf.N+1)/2) * conf.frequency_spacing;
+    
+    
+    conf.tx_filter_len        = 10*conf.os_factor_preamble; % essayer de trouver une manière de déterminer leur valeur bien
+    conf.rx_filterlen         = 10*conf.os_factor_preamble;
+    conf.rolloff              = 0.22;
+    
+    conf.bitsps               = 16;   % bits per audio sample
+    
+    % Modulation
+    conf.qpsk                 = [-1-1j -1+1j 1+1j 1-1j]/sqrt(2);
+    
+    % Noise parameters
+    conf.SNR_db               = 50;
+    conf.SNR_lin              = 10^(conf.SNR_db/10);
 
 
 % Init Section
 % all calculations that you only have to do once
-
 
 if mod(conf.os_factor_data,1) ~= 0
    disp('WARNING: Sampling rate must be a multiple of the symbol rate'); 
@@ -74,24 +79,11 @@ end
 res.biterrors   = zeros(conf.num_frames,1);
 res.rxnbits     = zeros(conf.num_frames,1);
 
-% TODO: To speed up your simulation pregenerate data you can reuse
-% beforehand.
-
-
-
 %plotting options for the nice unique plot thing
 tiledlayout(2,4)
-
-
-
-% Results
     
 for k=1:conf.num_frames
     
-    % Generate random data
-    txbits = binary_stream;%randi([0 1],conf.nbits,1);%%
-    
-    % TODO: Implement tx() Transmit Function
     [txsignal conf] = tx(txbits,conf,k);
 
     
@@ -168,12 +160,11 @@ for k=1:conf.num_frames
     % Audio Transmission   
     % % % % % % % % % % % %
     
-    % TODO: Implement rx() Receive Function
-
-
     nexttile
     plot(rxsignal);
     title("RX signal");
+
+
     [rxbits conf]       = rx(rxsignal,conf);
     
     res.rxnbits(k)      = length(rxbits);  
@@ -186,24 +177,17 @@ per = sum(res.biterrors > 0)/conf.num_frames;
 ber = sum(res.biterrors)/sum(res.rxnbits)
 
 
-%% output the image
-
-% % error handling
-% if length(rxbits) ~= 8 * prod(conf.image_size)
-%   error('Input vector has wrong size.')
-% end
-
-% convert to uint8
-rxbits_8bits = reshape(rxbits, [], 8);
-gray_image_rx = bi2de(rxbits_8bits,"left-msb");
-
-
-% reshape into image format
-gray_image_rx = reshape(gray_image_rx, conf.image_size);
-
-% displax image
-figure;
-imshow(gray_image_rx,[0 255]);
+%% Output the image
+    % convert to uint8
+    rxbits_8bits = reshape(rxbits, [], 8);
+    gray_image_rx = bi2de(rxbits_8bits,"left-msb");
+    
+    % reshape into image format
+    gray_image_rx = reshape(gray_image_rx, conf.image_size);
+    
+    % displax image
+    nexttile
+    imshow(gray_image_rx,[0 255]);
 
 % nexttile
 % semilogy(freq_range, ber, 'bx-' ,'LineWidth',3);
