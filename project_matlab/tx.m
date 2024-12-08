@@ -1,4 +1,4 @@
-function [txsignal conf] = tx(txbits,conf,k)
+function [txsignal, conf] = tx(txbits,conf)
 % Digital Transmitter
 %
 %   [txsignal conf] = tx(txbits,conf,k) implements a complete transmitter
@@ -13,7 +13,7 @@ function [txsignal conf] = tx(txbits,conf,k)
 %   k       : Frame index
 %
 
-    %% Preamble (do we need to normalize the preamble before normalizing the overall signal)
+    %% Preamble
     % Generate the preamble in BPSK
     conf.preamble_bpsk = preamble_generate(100);
 
@@ -26,7 +26,7 @@ function [txsignal conf] = tx(txbits,conf,k)
     %% Training sequence
     conf.training_sequence_bpsk = 2*randi([0, 1], conf.N, 1) - 1;
 
-    %% Bitstream
+    %% Bitstream to QPSK
     tx_qpsk = conf.qpsk(bi2de(reshape(txbits, size(txbits, 1)/2, 2), 'left-msb')+1).';
 
     %% Concatenate the training sequence and the bitstream
@@ -35,14 +35,14 @@ function [txsignal conf] = tx(txbits,conf,k)
 
     size_init_tx_parallel = size(tx_parallel_symbols, 2);
 
-    conf.training_period = size_init_tx_parallel/32; % use '-1' for only one training at the start
+    conf.training_period = floor(size_init_tx_parallel); % use '-1' for only one training at the start
     
 
     new_tx_parallel_symbols = [];
     idx = 1;
     conf.num_training = 0;
 
-    if conf.training_period == -1
+    if conf.training_period == -1 || ~conf.enable_multi_training
         conf.num_training = 1;
         new_tx_parallel_symbols = [conf.training_sequence_bpsk, tx_parallel_symbols];
 
@@ -50,9 +50,11 @@ function [txsignal conf] = tx(txbits,conf,k)
         while idx < size_init_tx_parallel
     
             if idx + conf.training_period > size_init_tx_parallel
-                new_tx_parallel_symbols = [new_tx_parallel_symbols, conf.training_sequence_bpsk, tx_parallel_symbols(:, idx:size_init_tx_parallel)];
+                new_tx_parallel_symbols = [new_tx_parallel_symbols, conf.training_sequence_bpsk, tx_parallel_symbols(:, idx:size_init_tx_parallel)]; %#ok<*AGROW>
+
             else
                 new_tx_parallel_symbols = [new_tx_parallel_symbols, conf.training_sequence_bpsk, tx_parallel_symbols(:, (0:conf.training_period-1) + idx)];
+
             end
             
             idx = idx + conf.training_period;
@@ -84,19 +86,17 @@ function [txsignal conf] = tx(txbits,conf,k)
         X = tx_OSIFFT_parallel(:, symbol_index);
         X_withCP = [X(end-CP_len+1:end); X];
 
-        tx_OSIFFT_withCP_parallel(:, symbol_index) = X_withCP; %#ok<AGROW>
-        
+        tx_OSIFFT_withCP_parallel(:, symbol_index) = X_withCP;
 
     end
 
 
     %% Parallel to serial conversion
     tx_OFDM = tx_OSIFFT_withCP_parallel(:);
-   
 
     %% Normalize the signals
     tx_OFDM = tx_OFDM / rms(tx_OFDM);
-    preamble = preamble / rms(preamble); % Le fait de faire comme ça permet d'avoir le preamble et le Signal avec exactement la même puissance
+    preamble = preamble / rms(preamble);
     
     %% Concatenate the overall message to send (Starting with the preamble and followed by the data)
     signal = [preamble; tx_OFDM; zeros(conf.gap_between_frames, 1)];
@@ -104,7 +104,7 @@ function [txsignal conf] = tx(txbits,conf,k)
     
     %% NOISE (for bypass mode, add some noise to check if we introduce some errors)
     if conf.audiosystem == 'bypass'
-        "Add some noise to the signal" %#ok<NOPRT>
+        disp(newline + "---> Using 'bypass' : Add some noise to the signal (SNRdB = " + conf.SNR_db + ")")
         noise = 1/sqrt(2*conf.SNR_lin)*randn(size(signal));
         signal = signal + noise + 1j*noise ;
     end

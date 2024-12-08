@@ -5,10 +5,6 @@ function [beginning_of_data, phase_of_peak] = frame_sync(rx_signal, OS_factor, c
 % rx_signal is the noisy received signal, andOS_factor is the oversampling factor (OS_factor=1 in chapter 2, OS_factor=4 in all later chapters).
 % The returned value is the index of the first data symbol in rx_signal.
 
-if (rx_signal(1) == 0)
-    warning('Signal seems to be noise-free. The frame synchronizer will not work in this case.');
-    
-end
 
 detection_threshold = 30;
 
