@@ -26,7 +26,9 @@ r_bb = 2*ofdmlowpass(r_dc,conf, conf.BW);
 % Demodulation of the RX signal
 
 filtered_rx_signal = matched_filter(r_bb, conf);
-[start, ~] = frame_sync(filtered_rx_signal, conf.os_factor_preamble, conf) %#ok<*NOPRT>
+[start, ~] = frame_sync(filtered_rx_signal, conf.os_factor_preamble, conf);
+
+disp(newline + "---> Preamble Detected : data_start_idx = " + start);
 
 
 %% Start the conversion of the OFDM data
@@ -83,7 +85,7 @@ function dataCorrected = phaseCorrection(fftSignal, conf)
     
     dataCorrected = zeros(size(fftSignal, 1), nSymb);
 
-    if conf.training_period == -1
+    if conf.training_period == -1 || ~conf.enable_multi_training
         H_hat = fftSignal(:,1)./conf.training_sequence_bpsk; % Imagine we have different Training sequences, we would add a loop here
     else
         H_hat = fftSignal(:,1:conf.training_period+1:end)./conf.training_sequence_bpsk; % Imagine we have different Training sequences, we would add a loop here
@@ -92,26 +94,30 @@ function dataCorrected = phaseCorrection(fftSignal, conf)
     train_idx = 1;
     symbol_increment = 0;
 
-    %% Phase tracking
+    %% Phase tracking + Training with training symbols
 
     
     previous_delta_theta = mod(angle(H_hat(:, 1)),2*pi);
     for k = 1 : nSymb % if we use another training sequence, we need to change the training sequence, ex: if k > 4 we change
         
 
-        if symbol_increment == conf.training_period && conf.training_period ~= -1
+        if symbol_increment == conf.training_period && conf.training_period ~= -1 && conf.enable_multi_training
             train_idx = train_idx + 1;
             symbol_increment = 0;
 
             new_delta_theta = mod(angle(H_hat(:, train_idx)),2*pi);
 
-        else % Viterbi-Viterbi implementation
-            delta_theta_viterbi = 1/4*angle(-fftSignal(:,k+train_idx).^4) + pi/2*(-1:4);
+        elseif conf.enable_phase_tracking % Viterbi-Viterbi implementation
+            delta_theta_viterbi = 1/4*angle(-fftSignal(:,k+train_idx).^4) + pi/2*(-4:4);
 
             [~, ind] = min(abs(delta_theta_viterbi.' - previous_delta_theta.'));
             actual_delta_theta_viterbi = mod(delta_theta_viterbi(ind), 2*pi).';
 
-            new_delta_theta = 0.999 * previous_delta_theta + 0.001*actual_delta_theta_viterbi;
+            new_delta_theta = mod(0.9999 * previous_delta_theta + 0.0001*actual_delta_theta_viterbi, 2*pi);
+
+        else
+            new_delta_theta = mod(previous_delta_theta, 2*pi);
+
         end
 
         dataCorrected(:, k) = fftSignal(:,k+train_idx)./abs(H_hat(:, train_idx)).*exp(-1j*new_delta_theta);
@@ -124,7 +130,7 @@ function dataCorrected = phaseCorrection(fftSignal, conf)
 
     nexttile
     plot(f,20*log10(abs(H_hat)),'.')
-    title("Magnitude of the Channel depending on the frequency")
+    title("Magnitude of the Channel (in dB)")
     xlabel("Frequency [Hz]")
     ylabel("Magnitude [dB]")
     xlim([f(1) f(end)]);
@@ -133,7 +139,7 @@ function dataCorrected = phaseCorrection(fftSignal, conf)
 
     nexttile
     plot(f,180/pi * unwrap(angle(H_hat)),'.')
-    title("Phase of the Channel depending on the frequency")
+    title("Phase of the Channel (in degres)")
     xlabel("Frequency [Hz]")
     ylabel("Phase [degres]")
     xlim([f(1) f(end)]);
