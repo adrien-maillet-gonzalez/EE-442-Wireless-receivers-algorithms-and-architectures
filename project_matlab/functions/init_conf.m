@@ -6,8 +6,8 @@ function [conf] = init_conf(conf, txbits)
     conf.f_symbol_data        = conf.frequency_spacing * conf.N; % symbol rate = 50 [Hz]
     conf.f_symbol_preamble    = 1000;
     
-    conf.num_frames           = 1;       % number of frames to transmit
-    conf.gap_between_frames   = 0;
+    % conf.num_frames           = 1;       % number of frames to transmit
+    % conf.gap_between_frames   = 0;
 
     conf.nbits                = size(txbits, 1); % number of bits
     conf.num_symbols          = conf.nbits / 2;
@@ -29,7 +29,6 @@ function [conf] = init_conf(conf, txbits)
     conf.qpsk                 = [-1-1j -1+1j 1+1j 1-1j]/sqrt(2);
     
     % Noise parameters
-    conf.SNR_db               = 50;
     conf.SNR_lin              = 10^(conf.SNR_db/10);
 
 end

@@ -58,22 +58,24 @@ end
 %% Channel Estimation and Phase correction
 
 dataCorrected = phaseCorrection(rx_FFT, conf);
-rx_serial = dataCorrected(:);
+conf.rx_serial_symbols = dataCorrected(:);
 
 %% Demodulation and Symbol Mapping
 
-[~, idx] = min(abs(rx_serial - conf.qpsk).^2, [], 2);
+[~, idx] = min(abs(conf.rx_serial_symbols - conf.qpsk).^2, [], 2);
 rxbits = reshape(de2bi(idx-1, 2, 'left-msb'), [], 1);
 
-nexttile
+figure(4)
 hold on;
 xline(0, '-.')
 yline(0, '-.')
-plot(rx_serial / rms(rx_serial), 'b.');
+plot(conf.rx_serial_symbols / rms(conf.rx_serial_symbols), 'b.');
 plot(conf.qpsk, 'rx');
 axis padded
 title("RX symbols");
 hold off;
+exportgraphics(gcf,'plots/3_3_RX_constellation (with phase tracking)_128symbols_2.png','Resolution',600)
+
 
 
 end
@@ -94,6 +96,20 @@ function dataCorrected = phaseCorrection(fftSignal, conf)
     train_idx = 1;
     symbol_increment = 0;
 
+    if conf.audiosystem == 'bypass' 
+        theta_n = zeros(size(fftSignal, 2)-1, 1);
+
+        for i=1:size(theta_n, 1)-1
+            theta_n(i+1) = theta_n(i) + conf.sigmaDeltaTheta*randn(1);%0.3;% constant increase the angle 
+        end
+
+        nexttile
+        plot(theta_n, '.');
+
+        theta_n = repmat(theta_n.', size(fftSignal, 1), 1);
+        fftSignal(:, 2:end) = fftSignal(:, 2:end) .* exp(1i*theta_n); %-------------------
+    end
+
     %% Phase tracking + Training with training symbols
 
     
@@ -108,12 +124,16 @@ function dataCorrected = phaseCorrection(fftSignal, conf)
             new_delta_theta = mod(angle(H_hat(:, train_idx)),2*pi);
 
         elseif conf.enable_phase_tracking % Viterbi-Viterbi implementation
-            delta_theta_viterbi = 1/4*angle(-fftSignal(:,k+train_idx).^4) + pi/2*(-4:4);
+            delta_theta_viterbi = 1/4*angle(-fftSignal(:,k+train_idx).^4) + pi/2*(-1:4);
+
 
             [~, ind] = min(abs(delta_theta_viterbi.' - previous_delta_theta.'));
-            actual_delta_theta_viterbi = mod(delta_theta_viterbi(ind), 2*pi).';
+            actual_delta_theta_viterbi_ = delta_theta_viterbi(:,ind(:));
+            actual_delta_theta_viterbi = actual_delta_theta_viterbi_(:, 1);
 
-            new_delta_theta = mod(0.9999 * previous_delta_theta + 0.0001*actual_delta_theta_viterbi, 2*pi);
+           
+            new_delta_theta = 0.99 * previous_delta_theta + 0.01*actual_delta_theta_viterbi;
+            new_delta_theta = mod(new_delta_theta, 2*pi);
 
         else
             new_delta_theta = mod(previous_delta_theta, 2*pi);
@@ -122,7 +142,7 @@ function dataCorrected = phaseCorrection(fftSignal, conf)
 
         dataCorrected(:, k) = fftSignal(:,k+train_idx)./abs(H_hat(:, train_idx)).*exp(-1j*new_delta_theta);
         symbol_increment = symbol_increment + 1;
-        previous_delta_theta = new_delta_theta;
+        previous_delta_theta = mod(new_delta_theta, 2*pi);
     end
     
     f = 0:conf.BW/conf.N:conf.BW*(1-1/conf.N);
@@ -138,7 +158,7 @@ function dataCorrected = phaseCorrection(fftSignal, conf)
     
 
     nexttile
-    plot(f,180/pi * unwrap(angle(H_hat)),'.')
+    plot(f,180/pi * mod(unwrap(angle(H_hat)), 2*pi),'.')
     title("Phase of the Channel (in degres)")
     xlabel("Frequency [Hz]")
     ylabel("Phase [degres]")

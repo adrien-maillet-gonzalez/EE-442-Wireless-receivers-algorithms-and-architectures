@@ -4,13 +4,15 @@ rng(123);
 addpath("functions/")
 addpath("images/")
 addpath("audio/")
+addpath('plots/');
+
 
 % Configuration Values
 conf.audiosystem = 'matlab'; % Values: 'matlab','native','bypass'
 conf.data_type = "random"; % Values: 'image', 'random'
 
-conf.enable_phase_tracking = true;
-conf.enable_multi_training = false; % %%%% the variables are defines here but they are not used in the code yet!
+conf.enable_phase_tracking = false;
+conf.enable_multi_training = false;
 
 %% Upload image
 
@@ -24,7 +26,8 @@ if conf.data_type == "image"
     txbits = binary_stream;
 
 elseif conf.data_type == "random"
-    txbits = randi([0 1],256*512,1);
+    num_ofdm_symbols = 128;
+    txbits = randi([0 1],256*2*num_ofdm_symbols,1);
 
 end
 
@@ -32,7 +35,9 @@ end
 conf.f_carrier            = 4000;
 conf.N                    = 256; % number of subcarriers
 conf.cyclic_prefix_len    = 32;%conf.N / 2;
-conf.preamble_len         = 100;
+conf.preamble_len         = 200;
+conf.SNR_db               = 200;
+conf.sigmaDeltaTheta      = 0.0;
     
 
 conf = init_conf(conf, txbits);
@@ -131,11 +136,35 @@ res.rxnbits      = length(rxbits);
 res.biterrors    = sum(rxbits ~= txbits);
     
 
-per = sum(res.biterrors > 0)/conf.num_frames;
+per = sum(res.biterrors > 0);
 ber = sum(res.biterrors)/sum(res.rxnbits); 
 
 disp(newline + "---> BER = " + ber);
 
+% plot the error in terms of time
+figure();
+tiledlayout(2,1);
+nexttile;
+moving_average_error = movmean(rxbits ~= txbits, 2^5);
+plot(moving_average_error, '.');
+title("Moving Average Bit Error");
+xlabel("Time");
+ylabel("Moving Average Bit Error");
+axis padded;
+yline(0, '-.');
+
+nexttile;
+angle_error = mod(movmean(min(abs(mod(angle(conf.rx_serial_symbols(:)).', 2*pi) - pi/4.*(1:2:7).')), 2^1).', 2*pi);
+plot(angle_error, '.');
+title("Moving Average Phase Error");
+xlabel("Time");
+ylabel("Moving Average Phase Error");
+axis padded;
+yline(pi/4, '-.');
+yline(0, '-.');
+
+
+exportgraphics(gcf,'plots/3_3_Bit and Phase error over time (with phase tracking)_128symbols_2.png','Resolution',600)
 
 %% Output the image
 if conf.data_type == "image"
@@ -147,7 +176,7 @@ if conf.data_type == "image"
     gray_image_rx = reshape(gray_image_rx, conf.image_size);
     
     % displax image
-    nexttile
+    figure()
     imshow(gray_image_rx,[0 255]);
     title(image_file)
 end

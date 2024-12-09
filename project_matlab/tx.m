@@ -35,7 +35,8 @@ function [txsignal, conf] = tx(txbits,conf)
 
     size_init_tx_parallel = size(tx_parallel_symbols, 2);
 
-    conf.training_period = floor(size_init_tx_parallel); % use '-1' for only one training at the start
+    conf.num_training_symbols = 4; % use '-1' for only one training at the start
+    conf.training_period = floor(size_init_tx_parallel/conf.num_training_symbols); 
     
 
     new_tx_parallel_symbols = [];
@@ -99,7 +100,7 @@ function [txsignal, conf] = tx(txbits,conf)
     preamble = preamble / rms(preamble);
     
     %% Concatenate the overall message to send (Starting with the preamble and followed by the data)
-    signal = [preamble; tx_OFDM; zeros(conf.gap_between_frames, 1)];
+    signal = [preamble; tx_OFDM];
 
     
     %% NOISE (for bypass mode, add some noise to check if we introduce some errors)
