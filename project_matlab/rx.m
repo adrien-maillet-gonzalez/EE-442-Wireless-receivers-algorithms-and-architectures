@@ -1,4 +1,4 @@
-function [rxbits conf] = rx(rxsignal,conf,k)
+function [rxbits conf] = rx(rxsignal,conf)
 % Digital Receiver
 %
 %   [txsignal conf] = tx(txbits,conf,k) implements a complete causal
@@ -74,7 +74,7 @@ plot(conf.qpsk, 'rx');
 axis padded
 title("RX symbols");
 hold off;
-exportgraphics(gcf,'plots/3_3_RX_constellation (with phase tracking)_128symbols_2.png','Resolution',600)
+exportgraphics(gcf,'plots/3_3_RX_constellation (with phase tracking)_128_symbols.png','Resolution',600)
 
 
 
@@ -128,11 +128,12 @@ function dataCorrected = phaseCorrection(fftSignal, conf)
 
 
             [~, ind] = min(abs(delta_theta_viterbi.' - previous_delta_theta.'));
-            actual_delta_theta_viterbi_ = delta_theta_viterbi(:,ind(:));
-            actual_delta_theta_viterbi = actual_delta_theta_viterbi_(:, 1);
 
-           
-            new_delta_theta = 0.99 * previous_delta_theta + 0.01*actual_delta_theta_viterbi;
+            actual_delta_theta_viterbi_matrix = delta_theta_viterbi(:, ind.');
+            actual_delta_theta_viterbi = extract_diagonal(actual_delta_theta_viterbi_matrix);
+
+
+            new_delta_theta = 0.5 * previous_delta_theta + 0.5*actual_delta_theta_viterbi;
             new_delta_theta = mod(new_delta_theta, 2*pi);
 
         else

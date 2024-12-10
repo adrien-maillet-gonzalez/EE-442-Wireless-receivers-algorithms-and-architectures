@@ -36,8 +36,8 @@ conf.f_carrier            = 4000;
 conf.N                    = 256; % number of subcarriers
 conf.cyclic_prefix_len    = 32;%conf.N / 2;
 conf.preamble_len         = 200;
-conf.SNR_db               = 200;
-conf.sigmaDeltaTheta      = 0.0;
+conf.SNR_db               = 20;
+conf.sigmaDeltaTheta      = 0.05;
     
 
 conf = init_conf(conf, txbits);
@@ -145,7 +145,7 @@ disp(newline + "---> BER = " + ber);
 figure();
 tiledlayout(2,1);
 nexttile;
-moving_average_error = movmean(rxbits ~= txbits, 2^5);
+moving_average_error = movmean(rxbits ~= txbits, 2^1);
 plot(moving_average_error, '.');
 title("Moving Average Bit Error");
 xlabel("Time");
@@ -164,7 +164,7 @@ yline(pi/4, '-.');
 yline(0, '-.');
 
 
-exportgraphics(gcf,'plots/3_3_Bit and Phase error over time (with phase tracking)_128symbols_2.png','Resolution',600)
+exportgraphics(gcf,'plots/3_3_Bit and Phase error over time (without phase tracking)_128_symbols.png','Resolution',600)
 
 %% Output the image
 if conf.data_type == "image"
