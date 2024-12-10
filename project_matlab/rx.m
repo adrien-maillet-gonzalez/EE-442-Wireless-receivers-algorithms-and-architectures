@@ -74,7 +74,7 @@ plot(conf.qpsk, 'rx');
 axis padded
 title("RX symbols");
 hold off;
-exportgraphics(gcf,'plots/3_3_RX_constellation (with phase tracking)_128_symbols.png','Resolution',600)
+exportgraphics(gcf,'plots/test_rx.png','Resolution',600)
 
 
 

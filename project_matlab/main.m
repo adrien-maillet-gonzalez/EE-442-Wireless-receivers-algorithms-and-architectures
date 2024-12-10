@@ -12,11 +12,11 @@ conf.audiosystem = 'matlab'; % Values: 'matlab','native','bypass'
 conf.data_type = "random"; % Values: 'image', 'random'
 
 conf.enable_phase_tracking = false;
-conf.enable_multi_training = false;
+conf.enable_multi_training = true;
 
 %% Upload image
 
-image_file = 'pyramid.png';
+image_file = 'yassin.png';
 
 [binary_stream, conf] = image_to_bitstream(image_file, conf);
 
@@ -26,7 +26,7 @@ if conf.data_type == "image"
     txbits = binary_stream;
 
 elseif conf.data_type == "random"
-    num_ofdm_symbols = 128;
+    num_ofdm_symbols = 32;
     txbits = randi([0 1],256*2*num_ofdm_symbols,1);
 
 end
@@ -145,26 +145,27 @@ disp(newline + "---> BER = " + ber);
 figure();
 tiledlayout(2,1);
 nexttile;
-moving_average_error = movmean(rxbits ~= txbits, 2^1);
+tx_qpsk_plot = conf.qpsk(bi2de(reshape(txbits, size(txbits, 1)/2, 2), 'left-msb')+1).';
+rx_qpsk_plot = conf.qpsk(bi2de(reshape(rxbits, size(rxbits, 1)/2, 2), 'left-msb')+1).';
+moving_average_error = movmean(tx_qpsk_plot ~= rx_qpsk_plot, 1);
 plot(moving_average_error, '.');
-title("Moving Average Bit Error");
+title("Symbol error");
 xlabel("Time");
-ylabel("Moving Average Bit Error");
+ylabel("Symbol error");
 axis padded;
 yline(0, '-.');
 
 nexttile;
-angle_error = mod(movmean(min(abs(mod(angle(conf.rx_serial_symbols(:)).', 2*pi) - pi/4.*(1:2:7).')), 2^1).', 2*pi);
+angle_error = movmean(mod(4*angle(conf.rx_serial_symbols(:)).', 2*pi), 1).';
 plot(angle_error, '.');
-title("Moving Average Phase Error");
+title("Phase (4*angle)");
 xlabel("Time");
-ylabel("Moving Average Phase Error");
+ylabel("Phase");
 axis padded;
-yline(pi/4, '-.');
-yline(0, '-.');
+yline(pi, '-.');
 
 
-exportgraphics(gcf,'plots/3_3_Bit and Phase error over time (without phase tracking)_128_symbols.png','Resolution',600)
+exportgraphics(gcf,'plots/test_error.png','Resolution',600)
 
 %% Output the image
 if conf.data_type == "image"
