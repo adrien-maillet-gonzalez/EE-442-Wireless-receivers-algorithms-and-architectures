@@ -12,11 +12,13 @@ conf.audiosystem = 'matlab'; % Values: 'matlab','native','bypass'
 conf.data_type = "random"; % Values: 'image', 'random'
 
 conf.enable_phase_tracking = false;
+
 conf.enable_multi_training = true;
+conf.num_training_symbols = 4; % use '-1' for only one training at the start
 
 %% Upload image
 
-image_file = 'yassin.png';
+image_file = 'pyramid.png';
 
 [binary_stream, conf] = image_to_bitstream(image_file, conf);
 
@@ -26,21 +28,22 @@ if conf.data_type == "image"
     txbits = binary_stream;
 
 elseif conf.data_type == "random"
-    num_ofdm_symbols = 32;
+    num_ofdm_symbols = 32; % Specify the number of random OFDM symbols to send
     txbits = randi([0 1],256*2*num_ofdm_symbols,1);
 
 end
 
 %% Configure frequencies
 conf.f_carrier            = 4000;
-conf.N                    = 256; % number of subcarriers
-conf.cyclic_prefix_len    = 32;%conf.N / 2;
+conf.N                    = 256;  % number of subcarriers
+conf.cyclic_prefix_len    = 32;
 conf.preamble_len         = 200;
-conf.SNR_db               = 20;
-conf.sigmaDeltaTheta      = 0.05;
+
+conf.SNR_db               = 20;   % artificial noise 
+conf.sigmaDeltaTheta      = 0.05; % artificial phase shift
     
 
-conf = init_conf(conf, txbits);
+conf = init_conf(conf, txbits);   % initialize the configuration variable
 
 
 %plotting options for the nice unique plot thing
@@ -55,7 +58,7 @@ tiledlayout(2,4)
 % Begin
 % Audio Transmission
 %
-for audio_transmission = 1
+for audio_transmission = 1 % used to minimize this section
 
 % normalize values (to avoid saturation of the speaker)
 peakvalue       = max(abs(txsignal));
@@ -131,7 +134,7 @@ title("RX signal");
 %% Reception of Data
 [rxbits, conf]       = rx(rxsignal,conf);
 
-%% Determine the transmission error
+%% Determine the transmission error values
 res.rxnbits      = length(rxbits);  
 res.biterrors    = sum(rxbits ~= txbits);
     
@@ -141,7 +144,9 @@ ber = sum(res.biterrors)/sum(res.rxnbits);
 
 disp(newline + "---> BER = " + ber);
 
-% plot the error in terms of time
+%% Plot the error in terms of time
+
+% Evolution of the Symbol error over time
 figure();
 tiledlayout(2,1);
 nexttile;
@@ -155,6 +160,7 @@ ylabel("Symbol error");
 axis padded;
 yline(0, '-.');
 
+% Evolution of the Phase over time
 nexttile;
 angle_error = movmean(mod(4*angle(conf.rx_serial_symbols(:)).', 2*pi), 1).';
 plot(angle_error, '.');
