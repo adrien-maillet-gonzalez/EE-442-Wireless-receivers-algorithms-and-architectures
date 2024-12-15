@@ -1,21 +1,64 @@
 function [txsignal, conf] = tx(txbits,conf)
-% Digital Transmitter
+% 
+%   This function generates a time-domain transmission signal (txsignal) for a 
+%   communication system based on the input bitstream (txbits) and configuration 
+%   parameters (conf). The output signal includes a preamble, training sequences, 
+%   and QPSK-modulated data symbols, prepared for transmission via an OFDM system.
 %
-%   [txsignal conf] = tx(txbits,conf,k) implements a complete transmitter
-%   consisting of:
-%       - modulator
-%       - pulse shaping filter
-%       - up converter
-%   in digital domain.
+% Inputs:
+%   - txbits: 
+%       A binary vector containing the input bitstream to be transmitted.
+%   - conf: 
+%       A structure containing configuration parameters for the transmission, including:
+%       * preamble_bpsk: Preamble bitstream in BPSK.
+%       * os_factor_preamble: Oversampling factor for the preamble.
+%       * qpsk: QPSK constellation mapping.
+%       * N: Number of subcarriers in OFDM.
+%       * cyclic_prefix_len: Length of the cyclic prefix.
+%       * os_factor_data: Oversampling factor for data symbols.
+%       * f_sampling: Sampling frequency.
+%       * f_carrier: Carrier frequency for up-conversion.
+%       * audiosystem: Mode of operation (e.g., "bypass").
+%       * SNR_db: Signal-to-noise ratio in dB (if noise is added).
 %
-%   txbits  : Information bits
-%   conf    : Universal configuration structure
-%   k       : Frame index
+% Outputs:
+%   - txsignal: 
+%       The generated time-domain transmission signal, ready for transmission.
+%   - conf: 
+%       Updated configuration structure containing additional fields for signal 
+%       processing (e.g., training sequences, modified parallel data structure).
 %
+% Processing Steps:
+%   1. Preamble Generation:
+%       - Generates a BPSK preamble, upsamples it, and pulse-shapes it using a 
+%         matched filter for synchronization purposes.
+%   2. Training Sequence Preparation:
+%       - Creates a BPSK training sequence for channel estimation and inserts it 
+%         periodically into the data stream.
+%   3. QPSK Modulation:
+%       - Maps input bits to QPSK symbols using a predefined constellation.
+%   4. OFDM Signal Construction:
+%       - Parallel-to-Serial Mapping: Arranges QPSK symbols into parallel streams.
+%       - OSIFFT: Generates the OFDM signal using an oversampled inverse FFT.
+%       - Cyclic Prefix Addition: Prepends a cyclic prefix to each OFDM symbol.
+%   5. Signal Concatenation:
+%       - Concatenates the preamble, training sequences, and OFDM data symbols.
+%   6. Normalization:
+%       - Normalizes the preamble and OFDM signals to maintain consistent power.
+%   7. Noise Addition (Optional):
+%       - In "bypass" mode, adds noise to the signal based on the specified SNR.
+%   8. Up-Conversion:
+%       - Converts the baseband signal to a passband signal using a carrier frequency.
+%
+% Notes:
+%   - Ensure that conf contains all necessary fields before calling the function.
+%   - Supports configurations for multiple training symbols and variable cyclic 
+%     prefix lengths.
+%   - Noise addition provides a bypass mode for debugging.
 
     %% Preamble
     % Generate the preamble in BPSK
-    conf.preamble_bpsk = preamble_generate(100);
+    conf.preamble_bpsk = preamble_generate(conf.preamble_len);
 
     % Up-sample the preamble
     preamble_up = upsample(conf.preamble_bpsk, conf.os_factor_preamble);
@@ -35,7 +78,7 @@ function [txsignal, conf] = tx(txbits,conf)
 
     size_init_tx_parallel = size(tx_parallel_symbols, 2);
 
-    conf.num_training_symbols = 4; % use '-1' for only one training at the start
+    
     conf.training_period = floor(size_init_tx_parallel/conf.num_training_symbols); 
     
 
@@ -43,8 +86,8 @@ function [txsignal, conf] = tx(txbits,conf)
     idx = 1;
     conf.num_training = 0;
 
-    if conf.training_period == -1 || ~conf.enable_multi_training
-        conf.num_training = 1;
+    if conf.num_training_symbols == 1 || ~conf.enable_multi_training
+
         new_tx_parallel_symbols = [conf.training_sequence_bpsk, tx_parallel_symbols];
 
     else
@@ -71,7 +114,7 @@ function [txsignal, conf] = tx(txbits,conf)
     %% OS-Inv-FFT (OSIFFT)
 
     % Concatenate the series signals
-    tx_OSIFFT_parallel = zeros(conf.os_factor_data * conf.N, size(tx_parallel_symbols, 2)); % do we really need to add the +1 here?
+    tx_OSIFFT_parallel = zeros(conf.os_factor_data * conf.N, size(tx_parallel_symbols, 2));
 
     for symbol_index = 1:size(tx_parallel_symbols, 2)
 
@@ -83,7 +126,7 @@ function [txsignal, conf] = tx(txbits,conf)
 
     for symbol_index = 1:size(tx_parallel_symbols, 2)
 
-        CP_len = conf.cyclic_prefix_len * conf.os_factor_data; % could be smart to create a function for this part
+        CP_len = conf.cyclic_prefix_len * conf.os_factor_data; 
         X = tx_OSIFFT_parallel(:, symbol_index);
         X_withCP = [X(end-CP_len+1:end); X];
 
