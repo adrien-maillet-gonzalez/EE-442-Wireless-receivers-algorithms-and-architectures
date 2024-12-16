@@ -24,30 +24,35 @@ image_file = 'pyramid.png';
 
 %% Select the data to transmit
 
+%% change the cyclic prefix len
+num_sub_carrier_list = [16 32 64 128 256 512 1024 2048];
+SER_list = zeros(1, length(num_sub_carrier_list));
+
+
+
+for x=1:length(num_sub_carrier_list)
+
+conf.N       = num_sub_carrier_list(x)  % number of subcarriers
+
+
+
 if conf.data_type == "image"
     txbits = binary_stream;
 
 elseif conf.data_type == "random"
     num_ofdm_symbols = 5; % Specify the number of random OFDM symbols to send
-    txbits = randi([0 1],256*2*num_ofdm_symbols,1);
+    txbits = randi([0 1],conf.N*2*num_ofdm_symbols,1);
 
 end
 
 %% Configure frequencies
 conf.f_carrier            = 4000;
-conf.N                    = 256;  % number of subcarriers
 conf.cyclic_prefix_len    = conf.N/2;
 
 
-%% change the cyclic prefix len
-frequency_spacing_list = [2 3 4 5 6 8 10 12];
-SER_list = zeros(1, length(frequency_spacing_list));
 
-
-
-for x=1:length(frequency_spacing_list)
     
-    conf.frequency_spacing    = frequency_spacing_list(x);%frequency_spacing_list(x);
+    conf.frequency_spacing    = 5;%num_sub_carrier_list(x);
     
     conf.preamble_len         = 100;
     
@@ -162,13 +167,13 @@ for x=1:length(frequency_spacing_list)
 end
 
 figure();
-plot(frequency_spacing_list, SER_list, '.', 'MarkerSize',20);
+semilogx(num_sub_carrier_list, SER_list, '.', 'MarkerSize',20);
 title("Symbol error vs Subcarrier Frequency Spacing");
 xlabel("Subcarrier Frequency Spacing");
 ylabel("Symbol Error Rate");
 axis padded;
 yline(0, '-.');
-xticks(frequency_spacing_list)
+xticks(num_sub_carrier_list)
 
 
 
