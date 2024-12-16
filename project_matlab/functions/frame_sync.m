@@ -6,7 +6,7 @@ function [beginning_of_data, phase_of_peak] = frame_sync(rx_signal, OS_factor, c
 % The returned value is the index of the first data symbol in rx_signal.
 
 
-detection_threshold = 15;
+detection_threshold = 12;
 
 % Calculate the frame synchronization sequence and map it to BPSK: 0 -> +1, 1 -> -1
 frame_sync_sequence = conf.preamble_bpsk;
