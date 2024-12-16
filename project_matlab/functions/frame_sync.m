@@ -47,18 +47,12 @@ for i = OS_factor * frame_sync_length + 1 : length(rx_signal)
             %xlabel('Offset [symbols]')
             %ylabel('Normalized autocorrelation')
             %grid on
-            nexttile
-            plot(T_list)
-            title("T list");
             return;
         end
     end
     
 end
 
-nexttile
-plot(T_list)
-title("T list");
 error('No synchronization sequence found.');
 end
 

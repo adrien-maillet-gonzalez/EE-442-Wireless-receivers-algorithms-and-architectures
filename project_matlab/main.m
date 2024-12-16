@@ -173,8 +173,8 @@ SER_list(x) = sum(tx_qpsk_plot ~= rx_qpsk_plot)/length(tx_qpsk_plot);
 end
 
 figure();
-plot(CP_len_list, SER_list, 'o');
-title("Symbol error");
+plot(CP_len_list, SER_list, '.', 'MarkerSize',20);
+title("Symbol error vs Cyclic Prefix");
 xlabel("Cyclic Prefix length");
 ylabel("Symbol Error Rate");
 axis padded;
