@@ -25,14 +25,14 @@ image_file = 'pyramid.png';
 %% Select the data to transmit
 
 %% change the cyclic prefix len
-num_sub_carrier_list = [16 32 64 128 256 512 1024 2048];
+num_sub_carrier_list = [32 64 128 256 512 1024 2048 2^12 2^13];
 SER_list = zeros(1, length(num_sub_carrier_list));
 
 
 
 for x=1:length(num_sub_carrier_list)
 
-conf.N       = num_sub_carrier_list(x)  % number of subcarriers
+conf.N       = num_sub_carrier_list(x);  % number of subcarriers
 
 
 
@@ -51,8 +51,6 @@ conf.cyclic_prefix_len    = conf.N/2;
 
 
 
-    
-    conf.frequency_spacing    = 5;%num_sub_carrier_list(x);
     
     conf.preamble_len         = 100;
     
@@ -168,8 +166,8 @@ end
 
 figure();
 semilogx(num_sub_carrier_list, SER_list, '.', 'MarkerSize',20);
-title("Symbol error vs Subcarrier Frequency Spacing");
-xlabel("Subcarrier Frequency Spacing");
+title("Symbol error vs Number of Subcarriers");
+xlabel("Number of Subcarriers");
 ylabel("Symbol Error Rate");
 axis padded;
 yline(0, '-.');
@@ -177,4 +175,4 @@ xticks(num_sub_carrier_list)
 
 
 
-exportgraphics(gcf,'plots/SER_FreqSpacing_test.png','Resolution',600)
+exportgraphics(gcf,'plots/SER_number_of_subcarriers_test.png','Resolution',600)

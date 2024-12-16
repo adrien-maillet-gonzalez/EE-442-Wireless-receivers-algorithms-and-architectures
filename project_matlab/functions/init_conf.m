@@ -3,9 +3,12 @@ function [conf] = init_conf(conf, txbits)
   % DO NOT TOUCH
     conf.f_sampling           = 48000;   % sampling rate
     
+    conf.frequency_spacing    = 5;
+    
     conf.f_symbol_data        = conf.frequency_spacing * conf.N; % symbol rate = 50 [Hz]
     conf.f_symbol_preamble    = 500;
     
+
     % conf.num_frames           = 1;       % number of frames to transmit
     % conf.gap_between_frames   = 0;
 
@@ -16,7 +19,7 @@ function [conf] = init_conf(conf, txbits)
     conf.os_factor_data       = conf.f_sampling / conf.f_symbol_data;
     conf.os_factor_preamble   = conf.f_sampling / conf.f_symbol_preamble;
     
-    conf.BW                   = ceil((conf.N+1)/2) * 5;
+    conf.BW                   = ceil((conf.N+1)/2) * conf.frequency_spacing;
     
     
     conf.tx_filter_len        = 10*conf.os_factor_preamble; % essayer de trouver une manière de déterminer leur valeur bien
