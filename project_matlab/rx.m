@@ -16,7 +16,7 @@ function [rxbits conf] = rx(rxsignal,conf)
 %       * N: Number of subcarriers.
 %       * os_factor_preamble: Oversampling factor for preamble detection.
 %       * os_factor_data: Oversampling factor for data symbols.
-%       * num_training: Number of training symbols for channel estimation.
+%       * num_training_symbols: Number of training symbols for channel estimation.
 %       * num_symbols: Total number of transmitted symbols.
 %       * cyclic_prefix_len: Length of the cyclic prefix.
 %       * qpsk: QPSK constellation mapping for demodulation.
@@ -79,7 +79,7 @@ function [rxbits conf] = rx(rxsignal,conf)
     %% Start the conversion of the OFDM data
     
     % Down-Sample the data and keep only the one from the start index
-    signal_len_with_cp = conf.N * conf.os_factor_data * (conf.num_training + conf.num_symbols / conf.N) * (conf.cyclic_prefix_len + conf.N) / conf.N;
+    signal_len_with_cp = conf.N * conf.os_factor_data * (conf.num_training_symbols + conf.num_symbols / conf.N) * (conf.cyclic_prefix_len + conf.N) / conf.N;
     rx_data_with_cp = r_bb(start:start+signal_len_with_cp-1);
     
     
@@ -93,7 +93,7 @@ function [rxbits conf] = rx(rxsignal,conf)
     %% FFT Processing
     % Perform FFT on each OFDM symbol to convert to frequency domain
     
-    num_symbols_with_training = conf.num_training + conf.num_symbols/conf.N;
+    num_symbols_with_training = conf.num_training_symbols + conf.num_symbols/conf.N;
     
     rx_FFT = zeros(conf.N, num_symbols_with_training);
     
@@ -141,7 +141,7 @@ function dataCorrected = phaseCorrection(fftSignal, conf)
 %       along rows and OFDM symbols along columns.
 %   - conf: 
 %       A structure containing configuration parameters for the phase correction, including:
-%       * num_training: Number of training symbols used for channel estimation.
+%       * num_training_symbols: Number of training symbols used for channel estimation.
 %       * training_sequence_bpsk: Known training sequence for channel estimation.
 %       * training_period: Periodicity of the training symbols.
 %       * enable_multi_training: Flag to enable/disable periodic training symbols.
@@ -181,7 +181,7 @@ function dataCorrected = phaseCorrection(fftSignal, conf)
 %   - The function supports simulation of phase noise for robustness testing.
 %   - Visualization can be omitted or modified as needed for deployment.
 
-    nSymb = size(fftSignal, 2) - conf.num_training; % Compute the number of actual symbols sent
+    nSymb = size(fftSignal, 2) - conf.num_training_symbols; % Compute the number of actual symbols sent
     
     dataCorrected = zeros(size(fftSignal, 1), nSymb);
 
@@ -200,7 +200,7 @@ function dataCorrected = phaseCorrection(fftSignal, conf)
         theta_n = zeros(size(fftSignal, 2)-1, 1);
 
         for i=1:size(theta_n, 1)-1
-            theta_n(i+1) = theta_n(i) + conf.sigmaDeltaTheta*randn(1);%0.3;
+            theta_n(i+1) = theta_n(i) + conf.sigmaDeltaTheta*randn(1);
         end
 
         % Plot the evolution of the Phase over time
@@ -208,7 +208,7 @@ function dataCorrected = phaseCorrection(fftSignal, conf)
         plot(theta_n, '.');
 
         theta_n = repmat(theta_n.', size(fftSignal, 1), 1);
-        fftSignal(:, 2:end) = fftSignal(:, 2:end) .* exp(1i*theta_n); %-------------------
+        fftSignal(:, 2:end) = fftSignal(:, 2:end) .* exp(1i*theta_n);
     end
 
     %% Phase tracking + Training with training symbols
@@ -218,7 +218,7 @@ function dataCorrected = phaseCorrection(fftSignal, conf)
     for k = 1 : nSymb % if we use another training sequence, we need to change the training sequence, ex: if k > 4 we change
         
         % Use the data from the new training sequence
-        if symbol_increment == conf.training_period && conf.training_period ~= -1 && conf.enable_multi_training
+        if symbol_increment == conf.training_period && conf.training_period > 1 && conf.enable_multi_training
             train_idx = train_idx + 1;
             symbol_increment = 0;
 
@@ -242,7 +242,6 @@ function dataCorrected = phaseCorrection(fftSignal, conf)
             new_delta_theta = mod(previous_delta_theta, 2*pi);
 
         end
-
         dataCorrected(:, k) = fftSignal(:,k+train_idx)./abs(H_hat(:, train_idx)).*exp(-1j*new_delta_theta);
         symbol_increment = symbol_increment + 1;
         previous_delta_theta = mod(new_delta_theta, 2*pi);
