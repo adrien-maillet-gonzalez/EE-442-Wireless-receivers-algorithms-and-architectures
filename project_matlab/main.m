@@ -14,7 +14,7 @@ conf.data_type = "random"; % Values: 'image', 'random'
 conf.enable_phase_tracking = false;
 
 conf.enable_multi_training = true;
-conf.num_training_symbols = 4; % use '-1' for only one training at the start
+conf.num_training_symbols = 4;
 
 %% Upload image
 
