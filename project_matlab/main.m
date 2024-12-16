@@ -47,7 +47,7 @@ SER_list = zeros(1, length(frequency_spacing_list));
 
 for x=1:length(frequency_spacing_list)
     
-    conf.frequency_spacing    = 5;%frequency_spacing_list(x);
+    conf.frequency_spacing    = frequency_spacing_list(x);%frequency_spacing_list(x);
     
     conf.preamble_len         = 100;
     
@@ -156,21 +156,7 @@ for x=1:length(frequency_spacing_list)
     
     SER_list(x) = sum(tx_qpsk_plot ~= rx_qpsk_plot)/length(tx_qpsk_plot);
     
-    
-    % %% Output the image
-    % if conf.data_type == "image"
-    %     % convert to uint8
-    %     rxbits_8bits = reshape(rxbits, [], 8);
-    %     gray_image_rx = bi2de(rxbits_8bits,"left-msb");
-    % 
-    %     % reshape into image format
-    %     gray_image_rx = reshape(gray_image_rx, conf.image_size);
-    % 
-    %     % displax image
-    %     figure()
-    %     imshow(gray_image_rx,[0 255]);
-    %     title(image_file)
-    % end
+
 
 
 end
@@ -182,7 +168,8 @@ xlabel("Subcarrier Frequency Spacing");
 ylabel("Symbol Error Rate");
 axis padded;
 yline(0, '-.');
+xticks(frequency_spacing_list)
 
 
 
-exportgraphics(gcf,'plots/SER_FreqSpacing.png','Resolution',600)
+exportgraphics(gcf,'plots/SER_FreqSpacing_test.png','Resolution',600)
