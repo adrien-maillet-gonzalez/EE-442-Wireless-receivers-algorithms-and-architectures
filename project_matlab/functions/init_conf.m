@@ -2,7 +2,7 @@ function [conf] = init_conf(conf, txbits)
  
   % DO NOT TOUCH
     conf.f_sampling           = 48000;   % sampling rate
-    conf.frequency_spacing    = 5;
+    
     conf.f_symbol_data        = conf.frequency_spacing * conf.N; % symbol rate = 50 [Hz]
     conf.f_symbol_preamble    = 1000;
     

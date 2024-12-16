@@ -40,12 +40,13 @@ conf.cyclic_prefix_len    = conf.N/2;
 
 
 %% change the cyclic prefix len
-CP_len_list = [2 4 8 16 32 40 64 80 100 128];
-SER_list = zeros(1, length(CP_len_list));
+frequency_spacing_list = [1 2 3 4 5 6 7 8 9 10];
+SER_list = zeros(1, length(frequency_spacing_list));
 
-for x=1:length(CP_len_list)
+for x=1:length(frequency_spacing_list)
 
-conf.cyclic_prefix_len = CP_len_list(x)
+conf.frequency_spacing    = frequency_spacing_list(x);
+
 conf.preamble_len         = 100;
 
 conf.SNR_db               = 20;   % artificial noise 
@@ -173,13 +174,13 @@ SER_list(x) = sum(tx_qpsk_plot ~= rx_qpsk_plot)/length(tx_qpsk_plot);
 end
 
 figure();
-plot(CP_len_list, SER_list, 'o');
-title("Symbol error");
-xlabel("Cyclic Prefix length");
+plot(frequency_spacing_list, SER_list, '.', 'MarkerSize',20);
+title("Symbol error vs Subcarrier Frequency Spacing");
+xlabel("Subcarrier Frequency Spacing");
 ylabel("Symbol Error Rate");
 axis padded;
 yline(0, '-.');
 
 
 
-exportgraphics(gcf,'plots/SER_CPlen_TEST.png','Resolution',600)
+exportgraphics(gcf,'plots/SER_FreqSpacing.png','Resolution',600)
