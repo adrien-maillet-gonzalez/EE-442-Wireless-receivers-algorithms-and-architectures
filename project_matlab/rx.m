@@ -111,16 +111,7 @@ function [rxbits conf] = rx(rxsignal,conf)
     [~, idx] = min(abs(conf.rx_serial_symbols - conf.qpsk).^2, [], 2);
     rxbits = reshape(de2bi(idx-1, 2, 'left-msb'), [], 1);
     
-    figure(4)
-    hold on;
-    xline(0, '-.')
-    yline(0, '-.')
-    plot(conf.rx_serial_symbols / rms(conf.rx_serial_symbols), 'b.');
-    plot(conf.qpsk, 'rx');
-    axis padded
-    title("RX symbols");
-    hold off;
-    exportgraphics(gcf,'plots/test_rx.png','Resolution',600)
+
 
 
 
@@ -203,10 +194,7 @@ function dataCorrected = phaseCorrection(fftSignal, conf)
             theta_n(i+1) = theta_n(i) + conf.sigmaDeltaTheta*randn(1);
         end
 
-        % Plot the evolution of the Phase over time
-        nexttile
-        plot(theta_n, '.');
-
+       
         theta_n = repmat(theta_n.', size(fftSignal, 1), 1);
         fftSignal(:, 2:end) = fftSignal(:, 2:end) .* exp(1i*theta_n);
     end
@@ -250,31 +238,5 @@ function dataCorrected = phaseCorrection(fftSignal, conf)
     f = 0:conf.BW/conf.N:conf.BW*(1-1/conf.N);
     f = f + conf.f_carrier - conf.BW/2;
 
-    nexttile
-    plot(f,20*log10(abs(H_hat)),'.')
-    title("Magnitude of the Channel (in dB)")
-    xlabel("Frequency [Hz]")
-    ylabel("Magnitude [dB]")
-    xlim([f(1) f(end)]);
-    
-    
-
-    nexttile
-    plot(f,180/pi * mod(unwrap(angle(H_hat)), 2*pi),'.')
-    title("Phase of the Channel (in degres)")
-    xlabel("Frequency [Hz]")
-    ylabel("Phase [degres]")
-    xlim([f(1) f(end)]);
-    
-    
-    nexttile
-    plot(abs(ifft(H_hat)),'.')
-    title("IFFT of the Channel")
-    xlabel("Number of sub-carrier")
-    ylabel("Amplitude of IFFT")
-    xline(8,'r','8')
-    xline(16, 'g', '16')
-    xline(32, 'b', '32')
-    xlim([0 256])
     
 end

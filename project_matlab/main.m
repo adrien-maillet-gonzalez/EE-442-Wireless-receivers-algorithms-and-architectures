@@ -8,7 +8,7 @@ addpath('plots/');
 
 
 % Configuration Values
-conf.audiosystem = 'bypass'; % Values: 'matlab','native','bypass'
+conf.audiosystem = 'matlab'; % Values: 'matlab','native','bypass'
 conf.data_type = "random"; % Values: 'image', 'random'
 
 conf.enable_phase_tracking = false;
@@ -28,7 +28,7 @@ if conf.data_type == "image"
     txbits = binary_stream;
 
 elseif conf.data_type == "random"
-    num_ofdm_symbols = 2; % Specify the number of random OFDM symbols to send
+    num_ofdm_symbols = 5; % Specify the number of random OFDM symbols to send
     txbits = randi([0 1],256*2*num_ofdm_symbols,1);
 
 end
@@ -37,6 +37,15 @@ end
 conf.f_carrier            = 4000;
 conf.N                    = 256;  % number of subcarriers
 conf.cyclic_prefix_len    = conf.N/2;
+
+
+%% change the cyclic prefix len
+CP_len_list = [2 4 8 16 32 40 64 80 100 128];
+SER_list = zeros(1, length(CP_len_list));
+
+for x=1:length(CP_len_list)
+
+conf.cyclic_prefix_len = CP_len_list(x)
 conf.preamble_len         = 100;
 
 conf.SNR_db               = 20;   % artificial noise 
@@ -46,8 +55,6 @@ conf.sigmaDeltaTheta      = 0.05; % artificial phase shift
 conf = init_conf(conf, txbits);   % initialize the configuration variable
 
 
-%plotting options for the nice unique plot thing
-tiledlayout(2,4)
     
 
 %% Transmission of data  
@@ -63,10 +70,6 @@ for audio_transmission = 1 % used to minimize this section
 % normalize values (to avoid saturation of the speaker)
 peakvalue       = max(abs(txsignal));
 normtxsignal    = txsignal / (peakvalue + 0.3);
-
-nexttile
-plot(txsignal);
-title("TX Signal");
 
 
 % create vector for transmission
@@ -127,9 +130,6 @@ end
 % Audio Transmission   
 % % % % % % % % % % % %
 
-nexttile
-plot(rxsignal);
-title("RX signal");
 
 %% Reception of Data
 [rxbits, conf]       = rx(rxsignal,conf);
@@ -147,46 +147,39 @@ disp(newline + "---> BER = " + ber);
 %% Plot the error in terms of time
 
 % Evolution of the Symbol error over time
-figure();
-tiledlayout(2,1);
-nexttile;
+
 tx_qpsk_plot = conf.qpsk(bi2de(reshape(txbits, size(txbits, 1)/2, 2), 'left-msb')+1).';
 rx_qpsk_plot = conf.qpsk(bi2de(reshape(rxbits, size(rxbits, 1)/2, 2), 'left-msb')+1).';
-moving_average_error = movmean(tx_qpsk_plot ~= rx_qpsk_plot, 1);
-plot(moving_average_error, '.');
-title("Symbol error");
-xlabel("Time");
-ylabel("Symbol error");
-axis padded;
-yline(0, '-.');
 
-% Evolution of the Phase over time
-nexttile;
-angle_error = movmean(mod(4*angle(conf.rx_serial_symbols(:)).', 2*pi), 1).';
-plot(angle_error, '.');
-title("Phase (4*angle)");
-xlabel("Time");
-ylabel("Phase");
-axis padded;
-yline(pi, '-.');
-yline(2*pi, '-.');
-yline(0, '-.');
+SER_list(x) = sum(tx_qpsk_plot ~= rx_qpsk_plot)/length(tx_qpsk_plot);
 
 
-exportgraphics(gcf,'plots/test_error.png','Resolution',600)
+% %% Output the image
+% if conf.data_type == "image"
+%     % convert to uint8
+%     rxbits_8bits = reshape(rxbits, [], 8);
+%     gray_image_rx = bi2de(rxbits_8bits,"left-msb");
+% 
+%     % reshape into image format
+%     gray_image_rx = reshape(gray_image_rx, conf.image_size);
+% 
+%     % displax image
+%     figure()
+%     imshow(gray_image_rx,[0 255]);
+%     title(image_file)
+% end
 
-%% Output the image
-if conf.data_type == "image"
-    % convert to uint8
-    rxbits_8bits = reshape(rxbits, [], 8);
-    gray_image_rx = bi2de(rxbits_8bits,"left-msb");
-    
-    % reshape into image format
-    gray_image_rx = reshape(gray_image_rx, conf.image_size);
-    
-    % displax image
-    figure()
-    imshow(gray_image_rx,[0 255]);
-    title(image_file)
+
 end
 
+figure();
+plot(CP_len_list, SER_list, 'o');
+title("Symbol error");
+xlabel("Cyclic Prefix length");
+ylabel("Symbol Error Rate");
+axis padded;
+yline(0, '-.');
+
+
+
+exportgraphics(gcf,'plots/SER_CPlen_TEST.png','Resolution',600)
