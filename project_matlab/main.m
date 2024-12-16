@@ -8,13 +8,13 @@ addpath('plots/');
 
 
 % Configuration Values
-conf.audiosystem = 'matlab'; % Values: 'matlab','native','bypass'
+conf.audiosystem = 'bypass'; % Values: 'matlab','native','bypass'
 conf.data_type = "random"; % Values: 'image', 'random'
 
 conf.enable_phase_tracking = false;
 
-conf.enable_multi_training = true;
-conf.num_training_symbols = 4;
+conf.enable_multi_training = false;
+conf.num_training_symbols = 1;
 
 %% Upload image
 
@@ -28,7 +28,7 @@ if conf.data_type == "image"
     txbits = binary_stream;
 
 elseif conf.data_type == "random"
-    num_ofdm_symbols = 32; % Specify the number of random OFDM symbols to send
+    num_ofdm_symbols = 2; % Specify the number of random OFDM symbols to send
     txbits = randi([0 1],256*2*num_ofdm_symbols,1);
 
 end
@@ -36,8 +36,8 @@ end
 %% Configure frequencies
 conf.f_carrier            = 4000;
 conf.N                    = 256;  % number of subcarriers
-conf.cyclic_prefix_len    = 32;
-conf.preamble_len         = 200;
+conf.cyclic_prefix_len    = conf.N/2;
+conf.preamble_len         = 100;
 
 conf.SNR_db               = 20;   % artificial noise 
 conf.sigmaDeltaTheta      = 0.05; % artificial phase shift
@@ -169,6 +169,8 @@ xlabel("Time");
 ylabel("Phase");
 axis padded;
 yline(pi, '-.');
+yline(2*pi, '-.');
+yline(0, '-.');
 
 
 exportgraphics(gcf,'plots/test_error.png','Resolution',600)
