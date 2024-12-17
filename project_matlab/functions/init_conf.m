@@ -16,7 +16,7 @@ function [conf] = init_conf(conf, txbits)
     conf.os_factor_data       = conf.f_sampling / conf.f_symbol_data;
     conf.os_factor_preamble   = conf.f_sampling / conf.f_symbol_preamble;
     
-    conf.BW                   = ceil((conf.N+1)/2) * 5;
+    conf.BW                   = ceil((conf.N+1)/2) * conf.frequency_spacing;
     
     
     conf.tx_filter_len        = 10*conf.os_factor_preamble; % essayer de trouver une manière de déterminer leur valeur bien

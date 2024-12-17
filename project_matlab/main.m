@@ -40,7 +40,7 @@ conf.cyclic_prefix_len    = conf.N/2;
 
 
 %% change the cyclic prefix len
-frequency_spacing_list = [2 3 4 5 6 8 10 12];
+frequency_spacing_list = [2 3 4 5 6 8 10 12 16 32];
 SER_list = zeros(1, length(frequency_spacing_list));
 
 
