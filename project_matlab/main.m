@@ -8,7 +8,7 @@ addpath('plots/');
 
 
 % Configuration Values
-conf.audiosystem = 'matlab'; % Values: 'matlab','native','bypass'
+conf.audiosystem = 'bypass'; % Values: 'matlab','native','bypass'
 conf.data_type = "random"; % Values: 'image', 'random'
 
 conf.enable_phase_tracking = false;
@@ -172,13 +172,29 @@ SER_list(x) = sum(tx_qpsk_plot ~= rx_qpsk_plot)/length(tx_qpsk_plot);
 
 end
 
-figure();
-plot(CP_len_list, SER_list, '.', 'MarkerSize',20);
-title("Symbol error vs Cyclic Prefix");
+% figure(1);
+% plot(CP_len_list, SER_list, '.', 'MarkerSize',20);
+% title("Symbol error vs Cyclic Prefix");
+% xlabel("Cyclic Prefix length");
+% ylabel("Symbol Error Rate");
+% axis padded;
+% yline(0, '-.');
+% 
+% 
+% 
+% exportgraphics(gcf,'plots/SER_CPlen_TEST.png','Resolution',600)
+
+figure(2);
+X = (512 + 2.*CP_len_list)./1280;
+spectral_efficiency_list = 2.*256./(1280.*(0.1 + X));
+
+semilogx(CP_len_list, spectral_efficiency_list, '.', 'MarkerSize',20);
+title("Spectral Efficiency vs Cyclic Prefix");
 xlabel("Cyclic Prefix length");
-ylabel("Symbol Error Rate");
+ylabel("Spectral Efficiency");
+xticks(CP_len_list);
+yticks(flip(spectral_efficiency_list, 2));
 axis padded;
-yline(0, '-.');
 
 
 
