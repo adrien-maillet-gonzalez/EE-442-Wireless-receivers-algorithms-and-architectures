@@ -120,7 +120,7 @@ function [rxbits conf] = rx(rxsignal,conf)
     axis padded
     title("RX symbols");
     hold off;
-    exportgraphics(gcf,'plots/test_rx.png','Resolution',600)
+    exportgraphics(gcf,'plots/image_constellation_rx_2.png','Resolution',600)
 
 
 

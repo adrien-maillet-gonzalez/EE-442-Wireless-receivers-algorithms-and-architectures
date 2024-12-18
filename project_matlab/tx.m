@@ -67,7 +67,7 @@ function [txsignal, conf] = tx(txbits,conf)
     preamble = matched_filter(preamble_up, conf);
 
     %% Training sequence
-    conf.training_sequence_bpsk = 2*randi([0, 1], conf.N, 1) - 1;
+    conf.training_sequence_bpsk = preamble_generate(conf.N);% 2*randi([0, 1], conf.N, 1) - 1;
 
     %% Bitstream to QPSK
     tx_qpsk = conf.qpsk(bi2de(reshape(txbits, size(txbits, 1)/2, 2), 'left-msb')+1).';
@@ -76,10 +76,10 @@ function [txsignal, conf] = tx(txbits,conf)
 
     tx_parallel_symbols = reshape(tx_qpsk, conf.N, []);
 
-    size_init_tx_parallel = size(tx_parallel_symbols, 2);
+    size_init_tx_parallel = size(tx_parallel_symbols, 2)
 
     
-    conf.training_period = floor(size_init_tx_parallel/conf.num_training_symbols); 
+    conf.training_period = floor(size_init_tx_parallel/conf.num_training_symbols) 
     
 
     new_tx_parallel_symbols = [];
@@ -109,6 +109,7 @@ function [txsignal, conf] = tx(txbits,conf)
 
     tx_parallel_symbols = new_tx_parallel_symbols;
     conf.new_tx_parallel_symbols = tx_parallel_symbols;
+    size(conf.new_tx_parallel_symbols, 2)
     
 
     %% OS-Inv-FFT (OSIFFT)
