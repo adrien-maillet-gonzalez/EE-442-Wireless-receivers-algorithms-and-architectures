@@ -78,22 +78,23 @@ function [txsignal, conf] = tx(txbits,conf)
 
     size_init_tx_parallel = size(tx_parallel_symbols, 2)
 
+
     
-    conf.training_period = floor(size_init_tx_parallel/conf.num_training_symbols) 
     
 
     new_tx_parallel_symbols = [];
     idx = 1;
     conf.num_training = 0;
 
-    if conf.num_training_symbols == 1 || ~conf.enable_multi_training
+    if conf.training_period >= size_init_tx_parallel || ~conf.enable_multi_training
 
         new_tx_parallel_symbols = [conf.training_sequence_bpsk, tx_parallel_symbols];
+        conf.num_training = conf.num_training + 1;
 
     else
         while idx < size_init_tx_parallel
     
-            if idx + conf.training_period > size_init_tx_parallel
+            if idx + conf.training_period >= size_init_tx_parallel
                 new_tx_parallel_symbols = [new_tx_parallel_symbols, conf.training_sequence_bpsk, tx_parallel_symbols(:, idx:size_init_tx_parallel)]; %#ok<*AGROW>
 
             else
@@ -106,6 +107,7 @@ function [txsignal, conf] = tx(txbits,conf)
         end
     end
 
+    conf.num_training_symbols = conf.num_training;
 
     tx_parallel_symbols = new_tx_parallel_symbols;
     conf.new_tx_parallel_symbols = tx_parallel_symbols;

@@ -120,7 +120,7 @@ function [rxbits conf] = rx(rxsignal,conf)
     axis padded
     title("RX symbols");
     hold off;
-    exportgraphics(gcf,'plots/image_constellation_rx_2.png','Resolution',600)
+    exportgraphics(gcf,"plots/image_constellation_rx_"+conf.str_plot+".png",'Resolution',600)
 
 
 
@@ -188,7 +188,7 @@ function dataCorrected = phaseCorrection(fftSignal, conf)
     if conf.num_training_symbols == 1 || ~conf.enable_multi_training
         H_hat = fftSignal(:,1)./conf.training_sequence_bpsk; % Imagine we have different Training sequences, we would add a loop here
     else
-        H_hat = fftSignal(:,1:conf.training_period+1:end)./conf.training_sequence_bpsk; % Imagine we have different Training sequences, we would add a loop here
+        H_hat = fftSignal(:,1:conf.training_period+1:end-1)./conf.training_sequence_bpsk; % Imagine we have different Training sequences, we would add a loop here
     end
 
     train_idx = 1;
@@ -218,8 +218,9 @@ function dataCorrected = phaseCorrection(fftSignal, conf)
     for k = 1 : nSymb % if we use another training sequence, we need to change the training sequence, ex: if k > 4 we change
         
         % Use the data from the new training sequence
-        if symbol_increment == conf.training_period && conf.training_period > 1 && conf.enable_multi_training
+        if symbol_increment == conf.training_period && k~=nSymb && conf.enable_multi_training
             train_idx = train_idx + 1;
+            %k = k - 1;
             symbol_increment = 0;
 
             new_delta_theta = mod(angle(H_hat(:, train_idx)),2*pi);
@@ -250,12 +251,15 @@ function dataCorrected = phaseCorrection(fftSignal, conf)
     f = 0:conf.BW/conf.N:conf.BW*(1-1/conf.N);
     f = f + conf.f_carrier - conf.BW/2;
 
+    figure();
+    tiledlayout(2,1);
     nexttile
     plot(f,20*log10(abs(H_hat)),'.')
     title("Magnitude of the Channel (in dB)")
     xlabel("Frequency [Hz]")
     ylabel("Magnitude [dB]")
     xlim([f(1) f(end)]);
+    legend show;
     
     
 
@@ -265,8 +269,10 @@ function dataCorrected = phaseCorrection(fftSignal, conf)
     xlabel("Frequency [Hz]")
     ylabel("Phase [degres]")
     xlim([f(1) f(end)]);
+
+    exportgraphics(gcf,"plots/channel_state_"+conf.str_plot+".png",'Resolution',600)
     
-    
+    figure()
     nexttile
     plot(abs(ifft(H_hat)),'.')
     title("IFFT of the Channel")

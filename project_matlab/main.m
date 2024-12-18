@@ -1,24 +1,26 @@
-close all; clear all;
+clear all;
+close all;
 rng(123);
 
 addpath("functions/")
 addpath("images/")
 addpath("audio/")
 addpath('plots/');
+conf.str_plot = 'test';
 
 
 % Configuration Values
 conf.audiosystem = 'matlab'; % Values: 'matlab','native','bypass'
-conf.data_type = "image"; % Values: 'image', 'random'
+conf.data_type = "random"; % Values: 'image', 'random'
 
-conf.enable_phase_tracking = true;
+conf.enable_phase_tracking = false;
 
 conf.enable_multi_training = true;
-conf.num_training_symbols = 256;
+conf.training_period = 15;
 
 %% Upload image
 
-image_file = 'epfl_256.png';
+image_file = 'pyramid.png';
 
 [binary_stream, conf] = image_to_bitstream(image_file, conf);
 
@@ -28,16 +30,16 @@ if conf.data_type == "image"
     txbits = binary_stream;
 
 elseif conf.data_type == "random"
-    num_ofdm_symbols = 10; % Specify the number of random OFDM symbols to send
-    txbits = randi([0 1],1024*2*num_ofdm_symbols,1);
+    num_ofdm_symbols = 90; % Specify the number of random OFDM symbols to send
+    txbits = randi([0 1],256*2*num_ofdm_symbols,1);
 
 end
 
 %% Configure frequencies
-conf.f_carrier            = 4000;
-conf.N                    = 1024;  % number of subcarriers
+conf.f_carrier            = 14000;
+conf.N                    = 256;  % number of subcarriers
 conf.cyclic_prefix_len    = 32;
-conf.preamble_len         = 200;
+conf.preamble_len         = 100;
 
 
 conf.SNR_db               = 20;   % artificial noise 
@@ -174,7 +176,7 @@ yline(2*pi, '-.');
 yline(0, '-.');
 
 
-exportgraphics(gcf,'plots/error_image_2.png','Resolution',600)
+exportgraphics(gcf,"plots/error_image_"+conf.str_plot+".png",'Resolution',600)
 
 %% Output the image
 if conf.data_type == "image"
@@ -189,6 +191,6 @@ if conf.data_type == "image"
     figure()
     imshow(gray_image_rx,[0 255]);
     title(image_file)
-    exportgraphics(gcf,'plots/image_basic_2.png','Resolution',600)
+    exportgraphics(gcf,"plots/image_basic_"+conf.str_plot+".png",'Resolution',600)
 end
 
