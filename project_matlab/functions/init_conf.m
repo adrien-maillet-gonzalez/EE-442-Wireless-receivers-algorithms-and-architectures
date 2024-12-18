@@ -31,4 +31,6 @@ function [conf] = init_conf(conf, txbits)
     % Noise parameters
     conf.SNR_lin              = 10^(conf.SNR_db/10);
 
+
+
 end
