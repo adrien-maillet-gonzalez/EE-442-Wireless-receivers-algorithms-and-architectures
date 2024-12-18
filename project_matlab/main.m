@@ -1,4 +1,4 @@
-close all; clear all; clc;
+close all; clear all;
 rng(123);
 
 addpath("functions/")
@@ -8,17 +8,17 @@ addpath('plots/');
 
 
 % Configuration Values
-conf.audiosystem = 'bypass'; % Values: 'matlab','native','bypass'
-conf.data_type = "random"; % Values: 'image', 'random'
+conf.audiosystem = 'matlab'; % Values: 'matlab','native','bypass'
+conf.data_type = "image"; % Values: 'image', 'random'
 
-conf.enable_phase_tracking = false;
+conf.enable_phase_tracking = true;
 
-conf.enable_multi_training = false;
-conf.num_training_symbols = 1;
+conf.enable_multi_training = true;
+conf.num_training_symbols = 256;
 
 %% Upload image
 
-image_file = 'pyramid.png';
+image_file = 'epfl_256.png';
 
 [binary_stream, conf] = image_to_bitstream(image_file, conf);
 
@@ -28,16 +28,17 @@ if conf.data_type == "image"
     txbits = binary_stream;
 
 elseif conf.data_type == "random"
-    num_ofdm_symbols = 2; % Specify the number of random OFDM symbols to send
-    txbits = randi([0 1],256*2*num_ofdm_symbols,1);
+    num_ofdm_symbols = 10; % Specify the number of random OFDM symbols to send
+    txbits = randi([0 1],1024*2*num_ofdm_symbols,1);
 
 end
 
 %% Configure frequencies
 conf.f_carrier            = 4000;
-conf.N                    = 256;  % number of subcarriers
-conf.cyclic_prefix_len    = conf.N/2;
-conf.preamble_len         = 100;
+conf.N                    = 1024;  % number of subcarriers
+conf.cyclic_prefix_len    = 32;
+conf.preamble_len         = 200;
+
 
 conf.SNR_db               = 20;   % artificial noise 
 conf.sigmaDeltaTheta      = 0.05; % artificial phase shift
@@ -62,7 +63,7 @@ for audio_transmission = 1 % used to minimize this section
 
 % normalize values (to avoid saturation of the speaker)
 peakvalue       = max(abs(txsignal));
-normtxsignal    = txsignal / (peakvalue + 0.3);
+normtxsignal    = txsignal / (peakvalue + 1.5);
 
 nexttile
 plot(txsignal);
@@ -173,7 +174,7 @@ yline(2*pi, '-.');
 yline(0, '-.');
 
 
-exportgraphics(gcf,'plots/test_error.png','Resolution',600)
+exportgraphics(gcf,'plots/error_image_2.png','Resolution',600)
 
 %% Output the image
 if conf.data_type == "image"
@@ -188,5 +189,6 @@ if conf.data_type == "image"
     figure()
     imshow(gray_image_rx,[0 255]);
     title(image_file)
+    exportgraphics(gcf,'plots/image_basic_2.png','Resolution',600)
 end
 
