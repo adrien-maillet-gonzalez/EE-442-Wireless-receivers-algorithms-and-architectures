@@ -236,7 +236,7 @@ function dataCorrected = phaseCorrection(fftSignal, conf)
             actual_delta_theta_viterbi = extract_diagonal(actual_delta_theta_viterbi_matrix);
 
 
-            new_delta_theta = 0.5 * previous_delta_theta + 0.5*actual_delta_theta_viterbi;
+            new_delta_theta = 0.5 * previous_delta_theta + 0.5 * actual_delta_theta_viterbi;
             new_delta_theta = mod(new_delta_theta, 2*pi);
 
         else

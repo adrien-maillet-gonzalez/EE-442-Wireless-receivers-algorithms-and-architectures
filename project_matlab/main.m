@@ -10,12 +10,12 @@ conf.str_plot = 'test';
 
 
 % Configuration Values
-conf.audiosystem = 'matlab'; % Values: 'matlab','native','bypass'
-conf.data_type = "random"; % Values: 'image', 'random'
+conf.audiosystem = 'bypass'; % Values: 'matlab','native','bypass'
+conf.data_type = "image"; % Values: 'image', 'random'
 
 conf.enable_phase_tracking = false;
 
-conf.enable_multi_training = true;
+conf.enable_multi_training = false;
 conf.training_period = 15;
 
 %% Upload image
@@ -42,8 +42,8 @@ conf.cyclic_prefix_len    = 32;
 conf.preamble_len         = 100;
 
 
-conf.SNR_db               = 20;   % artificial noise 
-conf.sigmaDeltaTheta      = 0.05; % artificial phase shift
+conf.SNR_db               = 2000;   % artificial noise 
+conf.sigmaDeltaTheta      = 0.0005; % artificial phase shift
     
 
 conf = init_conf(conf, txbits);   % initialize the configuration variable
