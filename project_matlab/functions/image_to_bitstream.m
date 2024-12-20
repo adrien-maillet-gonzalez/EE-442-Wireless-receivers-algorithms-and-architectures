@@ -49,7 +49,10 @@ function [binary_stream, conf] = image_to_bitstream(image_file, conf)
     gray_image = im2gray(image);
     conf.image_size = size(gray_image);
     image_vector = gray_image(:);
-    binary_stream_matrix = de2bi(image_vector,"left-msb");
+    black_pixels = ones(30000, 1);
+
+    new_image = [black_pixels; image_vector(30001:end)];
+    binary_stream_matrix = de2bi(new_image,"left-msb");
     
     binary_stream = binary_stream_matrix(:);
 
