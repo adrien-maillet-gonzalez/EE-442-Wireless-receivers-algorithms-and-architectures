@@ -8,7 +8,7 @@ addpath('plots/');
 
 
 % Configuration Values
-conf.audiosystem = 'matlab'; % Values: 'matlab','native','bypass'
+conf.audiosystem = 'bypass'; % Values: 'matlab','native','bypass'
 conf.data_type = "random"; % Values: 'image', 'random'
 
 conf.enable_phase_tracking = false;
@@ -165,13 +165,14 @@ conf.cyclic_prefix_len    = conf.N/2;
 end
 
 figure();
-semilogx(num_sub_carrier_list, SER_list, '.', 'MarkerSize',20);
+%SER_list = log1p(SER_list)
+semilogy(num_sub_carrier_list, 1 + SER_list, '.', 'MarkerSize',20);
 title("Symbol error vs Number of Subcarriers");
 xlabel("Number of Subcarriers");
-ylabel("Symbol Error Rate");
+ylabel("Symbol Error Rate, log(1+x)");
 axis padded;
-yline(0, '-.');
-xticks(num_sub_carrier_list)
+yline(1, '-.');
+xticks([32 512 1024 2048 4096 8192])
 
 
 
