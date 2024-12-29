@@ -160,32 +160,32 @@ for x=1:length(frequency_spacing_list)
 
 
 end
-
-figure();
-plot(frequency_spacing_list, SER_list, '.', 'MarkerSize',20);
-title("Symbol error vs Subcarrier Frequency Spacing");
-xlabel("Subcarrier Frequency Spacing");
-ylabel("Symbol Error Rate");
-axis padded;
-yline(0, '-.');
-xticks(frequency_spacing_list)
-
-
-
-exportgraphics(gcf,'plots/SER_FreqSpacing_test.png','Resolution',600)
+% 
+% figure();
+% plot(frequency_spacing_list, SER_list, '.', 'MarkerSize',20);
+% title("Symbol error vs Subcarrier Frequency Spacing");
+% xlabel("Subcarrier Frequency Spacing");
+% ylabel("Symbol Error Rate");
+% axis padded;
+% yline(0, '-.');
+% xticks(frequency_spacing_list)
+% 
+% 
+% 
+% exportgraphics(gcf,'plots/SER_FreqSpacing_test.png','Resolution',600)
 
 %% for plot only, we did not do semilog
 
 figure();
 frequency_spacing_list = [2, 3, 4, 5, 6, 8, 10, 12, 16, 32];
-SER_list = [0.004, 0, 0, 0, 0.001, 0.001, 0.002, 0.012, .015, 0.08];
+SER_list = [0.004, 0, 0, 0, 0.0006, 0.001, 0.002, 0.012, .015, 0.08]*10000;
 
-semilogy(frequency_spacing_list, SER_list, '.', 'MarkerSize',20);
+semilogy(frequency_spacing_list, 1+SER_list, '.', 'MarkerSize',20);
 title("Symbol error vs Subcarrier Frequency Spacing");
 xlabel("Subcarrier Frequency Spacing");
-ylabel("Symbol Error Rate");
+ylabel("Symbol Error Rate, log(1+x\times10^4)");
 axis padded;
-yline(0, '-.');
+yline(1, '-.');
 xticks(frequency_spacing_list)
 
 
