@@ -8,7 +8,7 @@ addpath('plots/');
 
 
 % Configuration Values
-conf.audiosystem = 'matlab'; % Values: 'matlab','native','bypass'
+conf.audiosystem = 'bypass'; % Values: 'matlab','native','bypass'
 conf.data_type = "random"; % Values: 'image', 'random'
 
 conf.enable_phase_tracking = false;
@@ -173,3 +173,21 @@ xticks(frequency_spacing_list)
 
 
 exportgraphics(gcf,'plots/SER_FreqSpacing_test.png','Resolution',600)
+
+%% for plot only, we did not do semilog
+
+figure();
+frequency_spacing_list = [2, 3, 4, 5, 6, 8, 10, 12, 16, 32];
+SER_list = [0.004, 0, 0, 0, 0.001, 0.001, 0.002, 0.012, .015, 0.08];
+
+semilogy(frequency_spacing_list, SER_list, '.', 'MarkerSize',20);
+title("Symbol error vs Subcarrier Frequency Spacing");
+xlabel("Subcarrier Frequency Spacing");
+ylabel("Symbol Error Rate");
+axis padded;
+yline(0, '-.');
+xticks(frequency_spacing_list)
+
+
+
+exportgraphics(gcf,'plots/SER_FreqSpacing_test_plot.png','Resolution',600)
