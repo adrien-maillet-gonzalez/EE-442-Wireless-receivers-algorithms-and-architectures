@@ -1,0 +1,38 @@
+function [rxbits conf] = rx(rxsignal,conf,k)
+% Digital Receiver
+%
+%   [txsignal conf] = tx(txbits,conf,k) implements a complete causal
+%   receiver in digital domain.
+%
+%   rxsignal    : received signal
+%   conf        : configuration structure
+%   k           : frame index
+%
+%   Outputs
+%
+%   rxbits      : received bits
+%   conf        : configuration structure
+%
+
+time = 0:1/conf.f_s:(length(rxsignal))/conf.f_s - 1/conf.f_s;
+size(time)
+size(rxsignal)
+r_dc = rxsignal .* exp(-1j*2*pi*conf.f_c*time');
+r_dc(conf.f_s:conf.f_s+10)
+
+r_bb = lowpass(r_dc,conf);
+
+
+pulse = rrc(conf.os_factor, conf.rolloff, conf.tx_filter_len*conf.os_factor);
+
+filtered_rx_signal = conv(r_bb, pulse, 'same');
+plot(filtered_rx_signal)
+
+%plot(rxsignal);
+preamble = preamble_generate(100);
+preamble_bpsk = -2.*preamble+1;
+preamble_bpsk(1:10)
+
+
+% dummy 
+rxbits = zeros(conf.nbits,1);
