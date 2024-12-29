@@ -199,3 +199,19 @@ axis padded;
 
 
 exportgraphics(gcf,'plots/SER_CPlen_TEST.png','Resolution',600)
+
+figure(1);
+CP_len_list = [2, 4, 8, 16, 32, 40, 64, 80, 100, 128];
+spectral_efficiency_list = [14, 16, 11.8, 12.1, 2, 1.5, 1.5, 0, 0, 0].*10^-3;
+
+semilogy(CP_len_list, 1+spectral_efficiency_list, '.', 'MarkerSize',20);
+title("Spectral Efficiency vs Cyclic Prefix lenght");
+xlabel("Cyclic Prefix length");
+ylabel("Symbol Error Rate, log(1+x)");
+xticks(CP_len_list);
+yline(1, '-.')
+axis padded;
+
+
+
+exportgraphics(gcf,'plots/SER_CPlen_TEST.png','Resolution',600)
